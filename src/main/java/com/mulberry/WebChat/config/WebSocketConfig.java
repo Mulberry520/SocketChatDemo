@@ -1,4 +1,4 @@
-package com.mulberry.socketchatdemo.config;
+package com.mulberry.WebChat.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

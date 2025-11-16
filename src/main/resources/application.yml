@@ -1,3 +1,17 @@
 spring:
   application:
-    name: SocketChatDemo
+    name: WebChat
+  datasource:
+    url: ${jdbc.url}
+    username: ${jdbc.username}
+    password: ${jdbc.password}
+    driver-class-name: ${jdbc.driver}
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+  type-aliases-package: com.mulberry.WebChat.entity
+
+server:
+  address: 0.0.0.0
+  port: 8080

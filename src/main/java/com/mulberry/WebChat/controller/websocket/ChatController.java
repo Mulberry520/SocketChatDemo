@@ -1,6 +1,6 @@
-package com.mulberry.socketchatdemo.controller;
+package com.mulberry.WebChat.controller.websocket;
 
-import com.mulberry.socketchatdemo.model.ChatMessage;
+import com.mulberry.WebChat.pojo.ChatMessage;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;

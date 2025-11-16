@@ -1,4 +1,4 @@
-package com.mulberry.socketchatdemo.model;
+package com.mulberry.WebChat.pojo;
 
 
 import lombok.Getter;
