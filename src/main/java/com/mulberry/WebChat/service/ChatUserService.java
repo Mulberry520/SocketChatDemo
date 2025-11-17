@@ -1,13 +1,25 @@
 package com.mulberry.WebChat.service;
 
-import com.mulberry.WebChat.dto.UserRegisterReq;
+import com.mulberry.WebChat.dto.UserDetailDTO;
+import org.springframework.security.core.userdetails.UserDetails;
 
 public interface ChatUserService {
-    String register(UserRegisterReq registerInfo);
+    enum Status {
+        ONLINE("ONLINE"),
+        OFFLINE("OFFLINE"),
+        BANNED("BANNED");
 
-    String login(UserRegisterReq loginInfo);
+        private final String status;
+        Status(String status) {
+            this.status = status;
+        }
 
-    Long getUerId(String username);
+        public String getStatus() {
+            return this.status;
+        }
+    }
 
-    String getPasswd(Long userId);
+    UserDetailDTO getUserInfo(UserDetails userDetail);
+
+    boolean updateUserInfo(UserDetailDTO updates);
 }

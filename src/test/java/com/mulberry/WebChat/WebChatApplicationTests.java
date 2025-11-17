@@ -14,17 +14,7 @@ class WebChatApplicationTests {
     void contextLoads() {
         System.out.println("hello");
         String a = template.opsForValue().get("user:1001");
-        if (a == null) {
-            System.out.println("null");
-        } else {
-            System.out.println(a);
-        }
-        String b = template.opsForValue().get("user:1002");
-        if (b == null) {
-            System.out.println("null");
-        } else {
-            System.out.println(b);
-        }
+        System.out.println("a = " + a);
     }
 
 }

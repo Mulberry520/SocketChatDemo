@@ -6,6 +6,13 @@ spring:
     username: ${jdbc.username}
     password: ${jdbc.password}
     driver-class-name: ${jdbc.driver}
+  data:
+    redis:
+      host: ${redis.host}
+      port: 6379
+      password: ${redis.password}
+      database: 0
+
 
 mybatis:
   configuration:
@@ -20,4 +27,5 @@ server:
 custom:
   jwt:
     secret-key: ${jwt.secret-key}
-    expiration: 1800000
+    access-expire: 1800000
+    refresh-expire: 86400000
