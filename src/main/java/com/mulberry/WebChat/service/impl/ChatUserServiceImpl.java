@@ -47,7 +47,7 @@ public class ChatUserServiceImpl implements ChatUserService {
         if (userId == null) {
             return "Wrong username";
         }
-        if (passwordEncoder.matches(password, getPasswd(userId))) {
+        if (!passwordEncoder.matches(password, getPasswd(userId))) {
             return "Wrong password";
         }
 

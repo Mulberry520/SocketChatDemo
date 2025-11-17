@@ -16,7 +16,7 @@ public class R<T> {
         return r;
     }
 
-    public static R<Void> success() {
+    public static <T> R<T> success() {
         return R.of(CommonConst.SUCCESS_CODE, CommonConst.SUCCESS_MSG, null);
     }
 
@@ -28,15 +28,15 @@ public class R<T> {
         return R.of(CommonConst.SUCCESS_CODE, msg, data);
     }
 
-    public static R<Void> error() {
+    public static <T> R<T> error() {
         return R.of(CommonConst.ERROR_CODE, CommonConst.ERROR_MSG, null);
     }
 
-    public static R<Void> error(String msg) {
+    public static <T> R<T> error(String msg) {
         return R.of(CommonConst.ERROR_CODE, msg, null);
     }
 
-    public static R<Void> error(Integer code, String msg) {
+    public static <T> R<T> error(Integer code, String msg) {
         return R.of(code, msg, null);
     }
 }
