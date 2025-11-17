@@ -1,5 +1,6 @@
 package com.mulberry.WebChat.service.impl;
 
+import com.mulberry.WebChat.common.CommonConst;
 import com.mulberry.WebChat.dto.UserLoginReq;
 import com.mulberry.WebChat.dto.UserRegisterReq;
 import com.mulberry.WebChat.mapper.ChatUserMapper;
@@ -23,8 +24,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate template;
-    private static final String REDIS_TOKEN_PREFIX = "refreshToken:";
-    private static final String REFRESH_COOKIE = "refreshToken";
 
     public AuthenticationServiceImpl(
             ChatUserMapper chatUserMapper,
@@ -73,6 +72,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         String refreshToken = jwtUtil.generateRefreshToken();
+        addUserRoleToRedis(username, CommonConst.DEFAULT_ROLE);
         addRefreshTokenToRedis(refreshToken, username);
         addRefreshTokenToCookie(response, refreshToken);
 
@@ -86,14 +86,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (oldRefreshToken == null) {
             throw new IllegalArgumentException("No refresh token");
         }
-        String username = template.opsForValue().get(REDIS_TOKEN_PREFIX + oldRefreshToken);
+        String username = template.opsForValue().get(CommonConst.REDIS_REFRESH_PREFIX + oldRefreshToken);
         if (username == null || username.isEmpty()) {
             throw new IllegalArgumentException("Expired refresh token");
         }
 
-        template.delete(REDIS_TOKEN_PREFIX + oldRefreshToken);
+        template.delete(CommonConst.REDIS_REFRESH_PREFIX + oldRefreshToken);
         String newRefreshToken = jwtUtil.generateRefreshToken();
         addRefreshTokenToRedis(newRefreshToken, username);
+        updateUserRole(username);
         String newAccessToken = jwtUtil.generateAccessToken(username);
 
         addRefreshTokenToCookie(response, newRefreshToken);
@@ -106,12 +107,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (refreshToken == null) {
             return "No refresh token";
         }
-        String username = template.opsForValue().get(REDIS_TOKEN_PREFIX + refreshToken);
+        String username = template.opsForValue().get(CommonConst.REDIS_REFRESH_PREFIX + refreshToken);
         if (username == null || username.isEmpty()) {
             return "Refresh Token expired";
         }
 
-        template.delete(REDIS_TOKEN_PREFIX + refreshToken);
+        template.delete(CommonConst.REDIS_REFRESH_PREFIX + refreshToken);
+        template.delete(CommonConst.USER_ROLE_PREFIX + username);
         userMapper.updateStatusByName(ChatUserService.Status.OFFLINE.getStatus(), username);
         return null;
     }
@@ -124,7 +126,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String refreshToken = null;
         for (Cookie cookie : cookies) {
-            if (REFRESH_COOKIE.equals(cookie.getName())) {
+            if (CommonConst.REFRESH_COOKIE.equals(cookie.getName())) {
                 refreshToken = cookie.getValue();
                 break;
             }
@@ -132,12 +134,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return refreshToken;
     }
 
+    private void addUserRoleToRedis(String username, String role) {
+        template.opsForValue().set((CommonConst.USER_ROLE_PREFIX + username), role, jwtUtil.getRefreshExpire(), TimeUnit.MILLISECONDS);
+    }
+
+    private void updateUserRole(String username) {
+        template.expire((CommonConst.USER_ROLE_PREFIX + username), jwtUtil.getRefreshExpire(), TimeUnit.MILLISECONDS);
+    }
+
     private void addRefreshTokenToRedis(String token, String username) {
-        template.opsForValue().set((REDIS_TOKEN_PREFIX + token), username, jwtUtil.getRefreshExpire(), TimeUnit.MILLISECONDS);
+        template.opsForValue().set((CommonConst.REDIS_REFRESH_PREFIX + token), username, jwtUtil.getRefreshExpire(), TimeUnit.MILLISECONDS);
     }
 
     private void addRefreshTokenToCookie(HttpServletResponse response, String refreshToken) {
-        ResponseCookie cookie = ResponseCookie.from(REFRESH_COOKIE, refreshToken)
+        ResponseCookie cookie = ResponseCookie.from(CommonConst.REFRESH_COOKIE, refreshToken)
                 .httpOnly(true)
                 .secure(false)              // Product env should be true
                 .sameSite("Strict")

@@ -27,5 +27,5 @@ server:
 custom:
   jwt:
     secret-key: ${jwt.secret-key}
-    access-expire: 1800000
+    access-expire: 600000
     refresh-expire: 86400000

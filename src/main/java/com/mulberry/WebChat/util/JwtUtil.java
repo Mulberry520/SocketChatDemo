@@ -1,6 +1,7 @@
 package com.mulberry.WebChat.util;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,19 +37,11 @@ public class JwtUtil {
                 .getBody();
     }
 
-    public String extractUsername(String token) {
+    public String extractUnexpiredUsername(String token) {
         try {
             return parseToken(token).getSubject();
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             return null;
-        }
-    }
-
-    public boolean isTokenExpired(String token) {
-        try {
-            return parseToken(token).getExpiration().before(new Date());
-        } catch (Exception e) {
-            return true;
         }
     }
 

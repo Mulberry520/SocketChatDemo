@@ -9,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,13 +23,16 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final ObjectMapper objectMapper;
     private final JwtUtil jwtUtil;
+    private final StringRedisTemplate template;
 
     public JwtAuthenticationFilter(
             ObjectMapper objectMapper,
-            JwtUtil jwtUtil
+            JwtUtil jwtUtil,
+            StringRedisTemplate template
     ) {
         this.objectMapper = objectMapper;
         this.jwtUtil = jwtUtil;
+        this.template = template;
     }
 
     @Override
@@ -53,9 +57,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = header.substring(CommonConst.OAUTH_LENGTH);
         try {
-            String username = jwtUtil.extractUsername(token);
-            if (username == null || jwtUtil.isTokenExpired(token)) {
+            String username = jwtUtil.extractUnexpiredUsername(token);
+            if (username == null) {
                 sendMessage(response, "Token expired or invalid");
+                return;
+            }
+
+            String role = template.opsForValue().get(CommonConst.USER_ROLE_PREFIX + username);
+            if (role == null) {
+                sendMessage(response, "Current user has logout");
                 return;
             }
 
@@ -63,7 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = org.springframework.security.core.userdetails.User
                         .withUsername(username)
                         .password("")
-                        .authorities("USER")
+                        .authorities(role)
                         .build();
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

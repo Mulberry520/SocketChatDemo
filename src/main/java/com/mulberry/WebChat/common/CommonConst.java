@@ -8,4 +8,13 @@ public class CommonConst {
 
     public static String OAUTH_TOKEN = "Bearer ";
     public static Integer OAUTH_LENGTH = 7;
+
+
+    public static final String USER_ROLE_PREFIX = "loginUser:";
+    public static final String REDIS_REFRESH_PREFIX = "refreshToken:";
+    public static final String REFRESH_COOKIE = "refreshToken";
+    public static final String DEFAULT_ROLE = "ROLE_USER";
+    public static final String ADMIN_ROLE = "ROLE_ADMIN";
+
+
 }
