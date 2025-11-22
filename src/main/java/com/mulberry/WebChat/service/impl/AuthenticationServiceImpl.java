@@ -1,8 +1,10 @@
 package com.mulberry.WebChat.service.impl;
 
 import com.mulberry.WebChat.common.CommonConst;
+import com.mulberry.WebChat.dto.UserChangePasswdReq;
 import com.mulberry.WebChat.dto.UserLoginReq;
 import com.mulberry.WebChat.dto.UserRegisterReq;
+import com.mulberry.WebChat.exception.BusinessException;
 import com.mulberry.WebChat.mapper.ChatUserMapper;
 import com.mulberry.WebChat.service.AuthenticationService;
 import com.mulberry.WebChat.service.ChatUserService;
@@ -38,24 +40,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public String register(UserRegisterReq registerInfo) {
+    public void register(UserRegisterReq registerInfo) {
         String username = registerInfo.getUsername();
         String password = registerInfo.getPassword();
         String phone = registerInfo.getPhone();
 
         if (userMapper.selectIdByName(username) != null) {
-            return "Username already exists";
+            throw new BusinessException("Username already exists");
         }
         if (userMapper.selectIdByPhone(phone) != null) {
-            return "Phone number was bounded";
+            throw new BusinessException("Phone number was bounded");
         }
 
         String encodedPassword = passwordEncoder.encode(password);
-        int affected = userMapper.insertBasicInfo(username, encodedPassword, phone);
-        if (affected != 1) {
-            return "Create user failed";
+        if (userMapper.insertBasicInfo(username, encodedPassword, phone) != 1) {
+            throw new BusinessException("Create new user failed");
         }
-        return null;
     }
 
     @Override
@@ -65,14 +65,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Long userId = userMapper.selectIdByName(username);
 
         if (userId == null) {
-            throw new IllegalArgumentException("Username not exists");
+            throw new BusinessException("Username not exists");
         }
         if (!passwordEncoder.matches(password, userMapper.selectPasswdById(userId))) {
-            throw new IllegalArgumentException("Wrong password");
+            throw new BusinessException("Wrong password");
         }
 
         String refreshToken = jwtUtil.generateRefreshToken();
-        addUserRoleToRedis(username, CommonConst.DEFAULT_ROLE);
+        addUserRoleToRedis(username, CommonConst.DEFAULT_ROLE);         // User role is scalable
         addRefreshTokenToRedis(refreshToken, username);
         addRefreshTokenToCookie(response, refreshToken);
 
@@ -84,11 +84,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public String refresh(HttpServletRequest request, HttpServletResponse response) {
         String oldRefreshToken = extraTokenFromCookie(request);
         if (oldRefreshToken == null) {
-            throw new IllegalArgumentException("No refresh token");
+            throw new IllegalArgumentException("No refresh token in cookie");
         }
         String username = template.opsForValue().get(CommonConst.REDIS_REFRESH_PREFIX + oldRefreshToken);
         if (username == null || username.isEmpty()) {
-            throw new IllegalArgumentException("Expired refresh token");
+            throw new BusinessException("Expired refresh token");
         }
 
         template.delete(CommonConst.REDIS_REFRESH_PREFIX + oldRefreshToken);
@@ -102,20 +102,46 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public String logout(HttpServletRequest request) {
+    public void logout(HttpServletRequest request) {
         String refreshToken = extraTokenFromCookie(request);
         if (refreshToken == null) {
-            return "No refresh token";
+            throw new IllegalArgumentException("No refresh token in cookie");
         }
         String username = template.opsForValue().get(CommonConst.REDIS_REFRESH_PREFIX + refreshToken);
         if (username == null || username.isEmpty()) {
-            return "Refresh Token expired";
+            throw new BusinessException("Refresh Token expired");
         }
 
         template.delete(CommonConst.REDIS_REFRESH_PREFIX + refreshToken);
         template.delete(CommonConst.USER_ROLE_PREFIX + username);
         userMapper.updateStatusByName(ChatUserService.Status.OFFLINE.getStatus(), username);
-        return null;
+    }
+
+    @Override
+    public void changePassword(UserChangePasswdReq changes, HttpServletRequest request) {
+        String newPassword = changes.getNewPassword();
+        if (!newPassword.equals(changes.getConfirmPassword())) {
+            throw new IllegalArgumentException("Confirm new password again");
+        }
+
+        String username = changes.getUsername();
+        Long userId = userMapper.selectIdByName(username);
+        if (userId == null) {
+            throw new BusinessException("User not exists");
+        }
+
+        String oldPassword = changes.getOldPassword();
+        if (!passwordEncoder.matches(oldPassword, userMapper.selectPasswdById(userId))) {
+            throw new BusinessException("Password wrong");
+        }
+        if (userMapper.updatePasswordById(userId, passwordEncoder.encode(newPassword)) != 1) {
+            throw new BusinessException("Change password failed");
+        }
+
+        String refreshToken = extraTokenFromCookie(request);
+        template.delete(CommonConst.REDIS_REFRESH_PREFIX + refreshToken);
+        template.delete(CommonConst.USER_ROLE_PREFIX + username);
+        userMapper.updateStatusByName(ChatUserService.Status.OFFLINE.getStatus(), username);
     }
 
     private String extraTokenFromCookie(HttpServletRequest request) {

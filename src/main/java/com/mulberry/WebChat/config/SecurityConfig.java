@@ -1,6 +1,8 @@
 package com.mulberry.WebChat.config;
 
+import com.mulberry.WebChat.common.CommonConst;
 import com.mulberry.WebChat.filter.JwtAuthenticationFilter;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -39,6 +41,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/admin/**").hasAuthority(CommonConst.ADMIN_ROLE)
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

@@ -21,5 +21,6 @@ public interface ChatUserService {
 
     UserDetailDTO getUserInfo(UserDetails userDetail);
 
-    boolean updateUserInfo(UserDetailDTO updates);
+    void updateUserInfo(UserDetailDTO updates);
+
 }

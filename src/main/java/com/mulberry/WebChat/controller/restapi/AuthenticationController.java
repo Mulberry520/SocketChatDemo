@@ -1,12 +1,15 @@
 package com.mulberry.WebChat.controller.restapi;
 
 import com.mulberry.WebChat.common.R;
+import com.mulberry.WebChat.dto.UserChangePasswdReq;
 import com.mulberry.WebChat.dto.UserLoginReq;
 import com.mulberry.WebChat.dto.UserRegisterReq;
 import com.mulberry.WebChat.service.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,12 +22,8 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public R<String> register(@RequestBody @Valid UserRegisterReq registerInfo) {
-        String errInfo = authService.register(registerInfo);
-        if (errInfo != null) {
-            return R.error(errInfo);
-        }
-
+    public R<Void> register(@RequestBody @Valid UserRegisterReq registerInfo) {
+        authService.register(registerInfo);
         return R.success();
     }
 
@@ -33,12 +32,8 @@ public class AuthenticationController {
             @RequestBody @Valid UserLoginReq loginInfo,
             HttpServletResponse response
     ) {
-        try {
-            String accessToken = authService.login(loginInfo, response);
-            return R.success(accessToken);
-        } catch (Exception e) {
-            return R.error(e.getMessage());
-        }
+        String accessToken = authService.login(loginInfo, response);
+        return R.success(accessToken);
     }
 
     @GetMapping("/refresh")
@@ -46,20 +41,24 @@ public class AuthenticationController {
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        try {
-            String newAccessToken = authService.refresh(request, response);
-            return R.success(newAccessToken);
-        } catch (Exception e) {
-            return R.error(e.getMessage());
-        }
+        String newAccessToken = authService.refresh(request, response);
+        return R.success(newAccessToken);
     }
 
     @GetMapping("/logout")
     public R<String> logout(HttpServletRequest request) {
-        String logoutError = authService.logout(request);
-        if (logoutError != null) {
-            return R.error(logoutError);
-        }
-        return R.success("Logout success");
+        authService.logout(request);
+        return R.success();
+    }
+
+    @PostMapping("/password")
+    public R<Void> changePassword(
+            @RequestBody @Valid UserChangePasswdReq change,
+            @AuthenticationPrincipal UserDetails userDetail,
+            HttpServletRequest request
+    ) {
+        change.setUsername(userDetail.getUsername());
+        authService.changePassword(change, request);
+        return R.success();
     }
 }

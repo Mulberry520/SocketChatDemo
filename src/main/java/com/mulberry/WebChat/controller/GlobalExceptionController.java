@@ -1,6 +1,7 @@
 package com.mulberry.WebChat.controller;
 
 import com.mulberry.WebChat.common.R;
+import com.mulberry.WebChat.exception.BusinessException;
 import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.FieldError;
@@ -14,6 +15,12 @@ import java.util.Optional;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionController {
+    @ExceptionHandler(BusinessException.class)
+    public R<Void> handleBusinessException(BusinessException e) {
+        log.warn("Business exception: {}", e.getMessage());
+        return R.error(e.getCode(), e.getMessage());
+    }
+
     @ExceptionHandler(JwtException.class)
     public R<Void> handleJwtException(JwtException e) {
         log.warn("JWT identity verification failed: {}", e.getMessage());

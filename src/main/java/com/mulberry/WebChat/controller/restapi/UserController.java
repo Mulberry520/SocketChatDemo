@@ -21,10 +21,7 @@ public class UserController {
     @GetMapping("/userinfo")
     public R<UserDetailDTO> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
         UserDetailDTO userInfo = userService.getUserInfo(userDetails);
-        if (userInfo != null) {
-            return R.success(userInfo);
-        }
-        return R.error();
+        return R.success(userInfo);
     }
 
     @PostMapping("/userinfo")
@@ -33,9 +30,8 @@ public class UserController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         updates.setUsername(userDetails.getUsername());
-        if (userService.updateUserInfo(updates)) {
-            return R.success();
-        }
-        return R.error();
+        userService.updateUserInfo(updates);
+        return R.success();
     }
+
 }

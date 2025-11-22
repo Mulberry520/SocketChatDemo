@@ -47,4 +47,10 @@ public interface ChatUserMapper {
             @Param("biography") String bio,
             @Param("email") String email
     );
+
+    @Update("update user set password = #{password} where id = #{id}")
+    int updatePasswordById(
+            @Param("id") Long userId,
+            @Param("password") String newPassword
+    );
 }
