@@ -18,5 +18,8 @@ public class CommonConst {
     public static final String ADMIN_ROLE = "ROLE_ADMIN";
     public static final String DEFAULT_ROLE = USER_ROLE;
 
+    public static final String DEFAULT_AVATAR = "/images/defaultAvatar.png";
+
+    public static final String AVATAR_FOLDER_PREFIX = "user/avatar/";
 
 }

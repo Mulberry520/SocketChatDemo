@@ -29,3 +29,10 @@ custom:
     secret-key: ${jwt.secret-key}
     access-expire: 600000
     refresh-expire: 86400000
+  oss:
+    endpoint: ${oss.endpoint}
+    bucket-name: ${oss.bucket-name}
+    region: ${oss.region}
+    access-key-id: ${oss.access-key-id}
+    access-key-secret: ${oss.access-key-secret}
+    url-expire: 1800000

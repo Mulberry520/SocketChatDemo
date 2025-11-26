@@ -33,3 +33,5 @@ build/
 .vscode/
 
 src/main/resources/secret.properties
+webchat-frontend/
+webchat-frontend/node_modules/

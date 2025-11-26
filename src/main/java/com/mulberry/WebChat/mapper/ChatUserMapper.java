@@ -21,6 +21,12 @@ public interface ChatUserMapper {
     @Select("select id from user where username = #{username}")
     Long selectIdByName(@Param("username") String name);
 
+    @Select("select username from user where id = #{id}")
+    String selectNameById(@Param("id") Long userId);
+
+    @Select("select nickname from user where id = #{id}")
+    String selectNicknameById(@Param("id") Long userId);
+
     @Select("select id from user where phone = #{phone}")
     Long selectIdByPhone(@Param("phone") String phone);
 
@@ -30,6 +36,8 @@ public interface ChatUserMapper {
     @Select("select status from user where username = #{username}")
     String selectStatusByName(@Param("username") String name);
 
+    @Select("select avatar from user where username = #{username}")
+    String selectAvatarByName(@Param("username") String name);
 
     @Update("update user set status = #{status} where username = #{username}")
     int updateStatusByName(
@@ -52,5 +60,11 @@ public interface ChatUserMapper {
     int updatePasswordById(
             @Param("id") Long userId,
             @Param("password") String newPassword
+    );
+
+    @Update("update user set avatar = #{avatar} where username = #{username}")
+    int updateAvatarByName(
+            @Param("username") String username,
+            @Param("avatar") String objectKey
     );
 }

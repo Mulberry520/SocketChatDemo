@@ -11,5 +11,7 @@ public class Friendship {
     private Long friendId;
     private String alias;
     private Integer favor;
+    private String status;
+    private String information;
     private LocalDateTime createTime;
 }
