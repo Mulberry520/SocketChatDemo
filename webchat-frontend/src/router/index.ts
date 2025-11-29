@@ -1,14 +1,22 @@
 import {createRouter, createWebHistory} from 'vue-router'
 import type { RouteRecordRaw, Router } from 'vue-router'
-import Home from "@/views/Home.vue";
+import LoginView from "@/views/LoginView.vue";
+import DashboardView from "@/views/DashboardView.vue";
 
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/dashboard',
+    component: DashboardView
+  },
+  {
+    path: '/login',
+    component: LoginView
+  },
+  {
     path: '/',
-    component: Home
-  }
-
+    redirect: '/login'
+  },
 ]
 
 const router: Router = createRouter({
@@ -16,7 +24,15 @@ const router: Router = createRouter({
   routes
 })
 
+router.beforeEach((to, from, next) => {
+  const publicPages = ['/login', '/register']
+  const authRequired = !publicPages.includes(to.path)
+  const token = localStorage.getItem('accessToken')
 
-export { router }
+  if (authRequired && !token) {
+    return next('/login')
+  }
+  next()
+})
 
 export default router
