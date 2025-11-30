@@ -1,6 +1,7 @@
 package com.mulberry.WebChat.controller.websocket;
 
 import com.mulberry.WebChat.pojo.ChatMessage;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -41,5 +42,17 @@ public class ChatController {
                 "/queue/private",
                 message
         );
+    }
+
+    @MessageMapping("/room/{roomId}/message")
+    @SendTo("/topic/room/{roomId}")
+    public ChatMessage handleRoomChat(
+            @DestinationVariable("roomId") String roomId,
+            ChatMessage message,
+            SimpMessageHeaderAccessor headerAccessor
+    ) {
+        String sender = (String) headerAccessor.getSessionAttributes().get("username");
+        message.setSender(sender);
+        return message;
     }
 }

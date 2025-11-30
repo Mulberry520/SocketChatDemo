@@ -1,49 +1,40 @@
 <template>
-  <Teleport to="body" v-if="visible">
-    <div class="modal-overlay" @click="close">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>My Friends</h2>
-          <button @click="close" class="close-btn">×</button>
-        </div>
-        <div class="friends-list">
-          <div v-if="loading">Loading friends...</div>
-          <div v-else-if="friends.length === 0">No friends yet.</div>
-          <div v-else class="friend-item" v-for="f in friends" :key="f.friendUsername">
-            <strong>{{ f.alias || f.friendUsername }}</strong>
-            <span class="status" :class="f.friendStatus">{{ f.friendStatus }}</span>
-            <span class="favor">❤️ {{ f.favor }}</span>
+  <div class="friends-panel">
+    <div class="panel-header">
+      <h3>My Friends</h3>
+    </div>
+    <el-scrollbar class="friends-list">
+      <div v-if="loading" class="loading">
+        <el-skeleton :rows="5" animated />
+      </div>
+      <div v-else-if="friends.length === 0" class="empty">
+        No friends yet.
+      </div>
+      <div v-else class="friend-item" v-for="f in friends" :key="f.friendUsername">
+        <el-avatar>{{ f.alias?.charAt(0).toUpperCase() || f.friendUsername.charAt(0).toUpperCase() }}</el-avatar>
+        <div class="friend-info">
+          <div class="name">{{ f.alias || f.friendUsername }}</div>
+          <div class="status-tag" :class="`status-${f.friendStatus.toLowerCase()}`">
+            {{ f.friendStatus }}
           </div>
         </div>
+        <div class="favor">❤️ {{ f.favor }}</div>
       </div>
-    </div>
-  </Teleport>
+    </el-scrollbar>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import {getFriendList} from "@/api/friendship.ts";
-import type {FriendsResponse} from "@/types/friendship.ts";
-
-const props = defineProps<{
-  visible: boolean
-}>()
-
-const emit = defineEmits<{
-  (e: 'close'): void
-}>()
+import { ref, onMounted } from 'vue'
+import { getFriendList } from '@/api/friendship'
+import type { FriendsResponse } from '@/types/friendship'
+import {ElMessage} from "element-plus";
 
 const friends = ref<FriendsResponse[]>([])
 const loading = ref(false)
 
-const close = () => {
-  emit('close')
-}
-
-watch(() => props.visible, async (newVal) => {
-  if (newVal && friends.value.length === 0) {
-    await loadFriends()
-  }
+onMounted(async () => {
+  await loadFriends()
 })
 
 const loadFriends = async () => {
@@ -53,7 +44,7 @@ const loadFriends = async () => {
     friends.value = res.data
   } catch (err) {
     console.error('Failed to load friends', err)
-    alert('Failed to load friend list')
+    ElMessage.error('Failed to load friend list')
   } finally {
     loading.value = false
   }
@@ -61,77 +52,68 @@ const loadFriends = async () => {
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
+.friends-panel {
+  height: 100%;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+  flex-direction: column;
 }
 
-.modal-content {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.close-btn {
-  font-size: 24px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #999;
+.panel-header {
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
 }
 
 .friends-list {
-  max-height: 400px;
-  overflow-y: auto;
+  flex: 1;
 }
 
 .friend-item {
   display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
+  border-bottom: 1px solid #f5f5f5;
 }
 
-.friend-item:last-child {
-  border-bottom: none;
+.friend-info {
+  flex: 1;
+  min-width: 0;
 }
 
-.status {
-  font-size: 0.85rem;
+.name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.status-tag {
+  font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
+  display: inline-block;
 }
 
-.status.online {
-  background: #d4edda;
-  color: #155724;
+.status-online {
+  background: #eaf8f0;
+  color: #07c160;
 }
 
-.status.offline {
-  background: #f8d7da;
-  color: #721c24;
+.status-offline {
+  background: #f5f5f5;
+  color: #999;
 }
 
 .favor {
-  font-size: 0.9rem;
-  color: #e74c3c;
+  font-size: 12px;
+  color: #ff6b6b;
+  white-space: nowrap;
+}
+
+.loading,
+.empty {
+  padding: 20px;
+  text-align: center;
+  color: #999;
 }
 </style>

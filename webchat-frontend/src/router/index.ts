@@ -1,26 +1,21 @@
 import {createRouter, createWebHistory} from 'vue-router'
 import type { RouteRecordRaw, Router } from 'vue-router'
 import LoginView from "@/views/LoginView.vue";
-import DashboardView from "@/views/DashboardView.vue";
-import WebSocketTest from "@/components/WebSocketTest.vue";
+import TestMainView from "@/views/Main.vue";
 
 
 const routes: RouteRecordRaw[] = [
-  {
-    path: '/dashboard',
-    component: DashboardView
-  },
   {
     path: '/login',
     component: LoginView
   },
   {
     path: '/',
-    redirect: '/login'
+    redirect: '/main'
   },
   {
-    path: '/websocket',
-    component: WebSocketTest
+    path: '/main',
+    component: TestMainView
   }
 ]
 

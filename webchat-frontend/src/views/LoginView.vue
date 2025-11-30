@@ -1,50 +1,93 @@
 <template>
   <div class="login-container">
-    <div class="login-card">
+    <el-card class="login-card">
       <h2>{{ isRegister ? 'Register' : 'Login' }}</h2>
 
       <!-- Login form -->
-      <form v-if="!isRegister" @submit.prevent="handleLogin">
-        <div class="form-group">
-          <label>Username</label>
-          <input v-model="loginForm.username" type="text" placeholder="Input your username" required />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input v-model="loginForm.password" type="password" placeholder="Input your password" required />
-        </div>
-        <button type="submit" :disabled="loading">
-          {{ loading ? 'Logged in ...' : 'Login' }}
-        </button>
+      <el-form
+        v-if="!isRegister"
+        @submit.prevent="handleLogin"
+        label-position="top"
+        :disabled="loading"
+      >
+        <el-form-item label="Username" required>
+          <el-input
+            v-model="loginForm.username"
+            placeholder="Input your username"
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="Password" required>
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="Input your password"
+            show-password
+            clearable
+          />
+        </el-form-item>
+
+        <el-button
+          type="primary"
+          native-type="submit"
+          :loading="loading"
+          style="width: 100%"
+        >
+          {{ loading ? 'Logging in...' : 'Login' }}
+        </el-button>
+
         <p v-if="error" class="error">{{ error }}</p>
         <p class="toggle-link" @click="isRegister = true">Don't have an account? Go to register</p>
-      </form>
+      </el-form>
 
-      <!-- register form -->
-      <form v-else @submit.prevent="handleRegister">
-        <div class="form-group">
-          <label>Username</label>
-          <input v-model="registerForm.username" type="text" placeholder="Input your username" required />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input v-model="registerForm.password" type="password" placeholder="Input your password" required />
-        </div>
-        <div class="form-group">
-          <label>Phone number</label>
-          <input
+      <!-- Register form -->
+      <el-form
+        v-else
+        @submit.prevent="handleRegister"
+        label-position="top"
+        :disabled="loading"
+      >
+        <el-form-item label="Username" required>
+          <el-input
+            v-model="registerForm.username"
+            placeholder="Input your username"
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="Password" required>
+          <el-input
+            v-model="registerForm.password"
+            type="password"
+            placeholder="Input your password"
+            show-password
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="Phone number" required>
+          <el-input
             v-model.number="registerForm.phone"
             type="tel"
-            required
+            placeholder="Enter 11-digit phone number"
+            clearable
           />
-        </div>
-        <button type="submit" :disabled="loading">
-          {{ loading ? 'Registering ...' : 'Register' }}
-        </button>
+        </el-form-item>
+
+        <el-button
+          type="primary"
+          native-type="submit"
+          :loading="loading"
+          style="width: 100%"
+        >
+          {{ loading ? 'Registering...' : 'Register' }}
+        </el-button>
+
         <p v-if="error" class="error">{{ error }}</p>
         <p class="toggle-link" @click="isRegister = false">Already have an account? Go to login</p>
-      </form>
-    </div>
+      </el-form>
+    </el-card>
   </div>
 </template>
 
@@ -53,7 +96,6 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login, register } from '@/api/auth'
 import type { LoginRequest, RegisterRequest } from '@/types/auth'
-import {connect} from "@/utils/websocket.ts";
 
 const loginForm = ref<LoginRequest>({
   username: '',
@@ -72,9 +114,7 @@ const error = ref('')
 const router = useRouter()
 
 const handleLogin = async () => {
-  if (loading.value) {
-    return
-  }
+  if (loading.value) return
 
   loading.value = true
   error.value = ''
@@ -83,8 +123,9 @@ const handleLogin = async () => {
     const response = await login(loginForm.value)
     const accessToken = String(response.data)
     localStorage.setItem('accessToken', accessToken)
+    localStorage.setItem('username', loginForm.value.username)
 
-    await router.push('/dashboard')
+    await router.push('/main')
   } catch (err: any) {
     error.value = err.message || 'Login failed, check username or password'
   } finally {
@@ -128,69 +169,32 @@ const handleRegister = async () => {
 .login-card {
   width: 100%;
   max-width: 400px;
-  padding: 2rem;
-  background: white;
+  padding: 30px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-h2 {
+.login-card h2 {
   text-align: center;
-  margin-bottom: 1.5rem;
-  color: #333;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: bold;
-  color: #555;
-}
-
-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-input:focus {
-  outline: none;
-  border-color: #409eff;
-}
-
-button {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #409eff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-button:disabled {
-  background-color: #a0cfff;
-  cursor: not-allowed;
+  margin-bottom: 24px;
+  color: #1f2d3d;
 }
 
 .error {
-  color: #f56565;
-  margin-top: 0.5rem;
+  color: #f56c6c;
+  font-size: 14px;
+  margin-top: 8px;
   text-align: center;
 }
 
 .toggle-link {
   text-align: center;
-  margin-top: 1rem;
+  margin-top: 16px;
   color: #409eff;
   cursor: pointer;
+  font-size: 14px;
+}
+
+.toggle-link:hover {
   text-decoration: underline;
 }
 </style>
