@@ -1,6 +1,5 @@
 package com.mulberry.WebChat.controller.restapi;
 
-import com.mulberry.WebChat.common.CommonConst;
 import com.mulberry.WebChat.common.R;
 import com.mulberry.WebChat.dto.UserDetailDTO;
 import com.mulberry.WebChat.service.ChatUserService;
@@ -41,7 +40,7 @@ public class UserController {
     public R<String> getAvatar(@AuthenticationPrincipal UserDetails userDetails) {
         String avatar = userService.getUserAvatar(userDetails);
         if (avatar == null) {
-            return R.success("Haven't avatar", CommonConst.DEFAULT_AVATAR);
+            return R.success("Haven't avatar", null);
         }
         return R.success("Avatar url is valid for 30 minutes", avatar);
     }

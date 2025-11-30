@@ -10,7 +10,6 @@ import com.mulberry.WebChat.service.FriendshipService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.rmi.StubNotFoundException;
 import java.util.List;
 
 @Service
@@ -120,7 +119,7 @@ public class FriendshipServiceImpl implements FriendshipService {
 
         String currStatus = friendship.getStatus();
         if (currStatus.equals(Status.APPROVED.getStatus())) {
-            return;
+            throw new BusinessException("You have approved this friend request");
         }
 
         if (operation.equals(Status.REJECTED.getStatus())) {
@@ -137,6 +136,9 @@ public class FriendshipServiceImpl implements FriendshipService {
                     ""
             );
             friendMapper.updateStatusById(requestFriendId, currUserId, operation);
+            return;
         }
+
+        throw new IllegalArgumentException("Wrong operation");
     }
 }

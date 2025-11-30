@@ -40,7 +40,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         return path.startsWith("/api/auth/login") ||
                 path.startsWith("/api/auth/register") ||
-                path.startsWith("/api/auth/refresh");
+                path.startsWith("/api/auth/refresh") ||
+                path.startsWith("/ws");
     }
 
     @Override
@@ -49,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        String header =request.getHeader("Authorization");
+        String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith(CommonConst.OAUTH_TOKEN)) {
             sendMessage(response, "No authorization token");
             return;

@@ -1,8 +1,12 @@
 <template>
   <div class="dashboard">
-    <h1>Welcome，{{ username }}！</h1>
+    <h1>Welcome！</h1>
 
     <button @click="showUserInfo = true" class="btn-view-info">Information</button>
+    <br><br>
+    <button @click="showFriendsModal" class="btn-view-info">Friend List</button>
+    <br><br>
+    <router-link to="/websocket">CHAT</router-link>
     <br><br>
     <button @click="handleLogout" class="btn-view-info">Logout</button>
 
@@ -17,18 +21,30 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- 好友列表：仅调用组件 -->
+    <FriendListView
+      :visible="showFriends"
+      @close="showFriends = false"
+    />
+
   </div>
 </template>
 
 <script setup lang="ts">
 import {ref} from 'vue'
 import UserInfoCard from '@/components/UserinfoCardView.vue'
+import FriendListView from "@/components/FriendListView.vue";
 import {useRouter} from "vue-router";
 import {logout} from "@/api/auth.ts";
 
 const router = useRouter()
 const showUserInfo = ref(false)
-const username = ref('User')
+const showFriends = ref(false)
+
+const showFriendsModal = () => {
+  showFriends.value = true
+}
 
 const handleLogout = async () => {
   const confirmed = window.confirm('Are you sure you want to logout?')

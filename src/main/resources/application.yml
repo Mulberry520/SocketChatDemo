@@ -35,4 +35,5 @@ custom:
     region: ${oss.region}
     access-key-id: ${oss.access-key-id}
     access-key-secret: ${oss.access-key-secret}
-    url-expire: 1800000
+    url-expire: 43200
+    file-expire: 518400

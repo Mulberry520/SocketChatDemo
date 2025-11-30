@@ -1,30 +1,21 @@
 package com.mulberry.WebChat.pojo;
 
+import lombok.Data;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-
-@Getter
-@Setter
-@ToString
+@Data
 public class ChatMessage {
     private String content;
     private String sender;
-    private MessageType type;
+    private String recipient;
+    private Long timestamp;
 
     public ChatMessage() {
     }
 
-    public ChatMessage(String content, String sender, MessageType type) {
+    public ChatMessage(String content, String sender, Long timestamp) {
         this.content = content;
         this.sender = sender;
-        this.type = type;
-    }
-
-    public enum MessageType {
-        JOIN,
-        CHAT,
-        LEAVE
+        this.recipient = null;
+        this.timestamp = timestamp;
     }
 }

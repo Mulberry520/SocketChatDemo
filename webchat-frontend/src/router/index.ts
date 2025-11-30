@@ -2,6 +2,7 @@ import {createRouter, createWebHistory} from 'vue-router'
 import type { RouteRecordRaw, Router } from 'vue-router'
 import LoginView from "@/views/LoginView.vue";
 import DashboardView from "@/views/DashboardView.vue";
+import WebSocketTest from "@/components/WebSocketTest.vue";
 
 
 const routes: RouteRecordRaw[] = [
@@ -17,6 +18,10 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     redirect: '/login'
   },
+  {
+    path: '/websocket',
+    component: WebSocketTest
+  }
 ]
 
 const router: Router = createRouter({

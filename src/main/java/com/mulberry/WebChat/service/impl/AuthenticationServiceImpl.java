@@ -88,7 +88,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
         String username = template.opsForValue().get(CommonConst.REDIS_REFRESH_PREFIX + oldRefreshToken);
         if (username == null || username.isEmpty()) {
-            throw new BusinessException("Expired refresh token");
+            throw new BusinessException(CommonConst.TOKEN_EXPIRE, "Expired refresh token");
         }
 
         template.delete(CommonConst.REDIS_REFRESH_PREFIX + oldRefreshToken);

@@ -2,26 +2,44 @@ package com.mulberry.WebChat.controller.websocket;
 
 import com.mulberry.WebChat.pojo.ChatMessage;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 @Controller
 public class ChatController {
-    @MessageMapping("/chat.sendMessage")
-    @SendTo("/topic/public")
-    public ChatMessage sendMessage(@Payload ChatMessage message) {
+    private final SimpMessagingTemplate messagingTemplate;
+
+    public ChatController(SimpMessagingTemplate messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
+    }
+
+    @MessageMapping("/chat")
+    @SendTo("/topic/message")
+    public ChatMessage handleGroupChat(
+            ChatMessage message,
+            SimpMessageHeaderAccessor headerAccessor
+    ) {
+        String username = (String) headerAccessor.getSessionAttributes().get("username");
+        message.setSender(username);
         return message;
     }
 
-    @MessageMapping("/chat.addUser")
-    @SendTo("/topic/public")
-    public ChatMessage addUser(
-            @Payload ChatMessage message,
+    @MessageMapping("/private")
+    public void handlePrivateChat(
+            ChatMessage message,
             SimpMessageHeaderAccessor headerAccessor
     ) {
-        headerAccessor.getSessionAttributes().put("username", message.getSender());
-        return message;
+        String sender = (String) headerAccessor.getSessionAttributes().get("username");
+        String recipient = message.getRecipient();
+
+        message.setSender(sender);
+
+        messagingTemplate.convertAndSendToUser(
+                recipient,
+                "/queue/private",
+                message
+        );
     }
 }

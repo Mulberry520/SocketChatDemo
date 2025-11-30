@@ -1,6 +1,7 @@
 package com.mulberry.WebChat.util;
 
 import com.aliyun.oss.OSS;
+import com.aliyun.oss.model.ObjectMetadata;
 import com.aliyun.oss.model.PutObjectRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,9 @@ public class FileLoadUtil {
     @Value("${custom.oss.bucket-name}")
     private String bucketName;
     @Value("${custom.oss.url-expire}")
-    private int urlExpire;
+    private Long urlExpire;
+    @Value("${custom.oss.file-expire}")
+    private Long fileExpire;
 
     private final OSS ossClient;
 
@@ -89,14 +92,23 @@ public class FileLoadUtil {
 
     public String ossSave(MultipartFile file, String folder) throws IOException {
         String savedName = folder + getRandomName(file);
-        PutObjectRequest objectRequest = new PutObjectRequest(this.bucketName, savedName, file.getInputStream());
+
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setCacheControl("public, max-age=" + fileExpire);
+        //metadata.setContentType("");
+        PutObjectRequest objectRequest = new PutObjectRequest(
+                this.bucketName,
+                savedName,
+                file.getInputStream(),
+                metadata
+        );
         ossClient.putObject(objectRequest);
 
         return savedName;
     }
 
     public String generateSignedUrl(String objectKey) {
-        Date expirationTime = new Date(System.currentTimeMillis() + this.urlExpire);
+        Date expirationTime = new Date(System.currentTimeMillis() + this.urlExpire * 1000);
         URL url = ossClient.generatePresignedUrl(bucketName, objectKey, expirationTime);
         return url.toString();
     }

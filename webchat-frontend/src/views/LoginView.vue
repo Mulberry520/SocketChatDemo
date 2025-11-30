@@ -53,6 +53,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login, register } from '@/api/auth'
 import type { LoginRequest, RegisterRequest } from '@/types/auth'
+import {connect} from "@/utils/websocket.ts";
 
 const loginForm = ref<LoginRequest>({
   username: '',
@@ -82,6 +83,7 @@ const handleLogin = async () => {
     const response = await login(loginForm.value)
     const accessToken = String(response.data)
     localStorage.setItem('accessToken', accessToken)
+
     await router.push('/dashboard')
   } catch (err: any) {
     error.value = err.message || 'Login failed, check username or password'

@@ -12,8 +12,8 @@ export interface UserinfoResponse {
 
 export interface UserUpdateRequest {
   nickname: string | null,
-  gender: string | null,    // 'male' or 'female'
-  birth: string | null,     // yyyy-MM-dd
+  gender: string | null,
+  birth: string | null,
   region: string | null,
   biography: string | null,
   email: string | null

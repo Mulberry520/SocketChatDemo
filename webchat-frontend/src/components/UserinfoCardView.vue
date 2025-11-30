@@ -122,7 +122,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { getUserinfo, getUserAvatar, updateUserinfo, updateUserAvatar } from '@/api/user'
-import type { UserinfoResponse, UserUpdateRequest } from '@/types/Userinfo'
+import type { UserinfoResponse, UserUpdateRequest } from '@/types/userinfo.ts'
 import defaultAvatar from '@/assets/defaultAvatar.png'
 
 const props = defineProps<{

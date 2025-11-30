@@ -1,4 +1,4 @@
-import type {UserinfoResponse, UserUpdateRequest} from "@/types/Userinfo.ts";
+import type {UserinfoResponse, UserUpdateRequest} from "@/types/userinfo.ts";
 import request from "@/utils/request.ts";
 import type {ApiResponse} from "@/types/api.ts";
 

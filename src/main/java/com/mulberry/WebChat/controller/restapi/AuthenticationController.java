@@ -45,7 +45,7 @@ public class AuthenticationController {
         return R.success(newAccessToken);
     }
 
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public R<String> logout(HttpServletRequest request) {
         authService.logout(request);
         return R.success();

@@ -20,8 +20,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
-import static org.apache.tomcat.util.http.Method.OPTIONS;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -61,6 +59,8 @@ public class SecurityConfig {
                 .formLogin(FormLoginConfigurer::disable)
                 .httpBasic(HttpBasicConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/ws/**", "/ws").permitAll()
+                        .requestMatchers("/topic/**", "/user/**").permitAll()
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh").permitAll()
                         .requestMatchers("/admin/**").hasAuthority(CommonConst.ADMIN_ROLE)
                         .anyRequest().authenticated()
