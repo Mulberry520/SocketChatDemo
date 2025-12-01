@@ -1,5 +1,6 @@
 package com.mulberry.WebChat.mapper;
 
+import com.mulberry.WebChat.dto.FriendDetailsResp;
 import com.mulberry.WebChat.dto.UserDetailDTO;
 import org.apache.ibatis.annotations.*;
 
@@ -38,6 +39,9 @@ public interface ChatUserMapper {
 
     @Select("select avatar from user where username = #{username}")
     String selectAvatarByName(@Param("username") String name);
+
+    @Select("select * from user where username = #{username}")
+    FriendDetailsResp selectByFriend(@Param("username") String name);
 
     @Update("update user set status = #{status} where username = #{username}")
     int updateStatusByName(

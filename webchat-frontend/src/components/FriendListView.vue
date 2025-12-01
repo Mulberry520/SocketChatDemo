@@ -18,7 +18,7 @@
             {{ f.friendStatus }}
           </div>
         </div>
-        <div class="favor">❤️ {{ f.favor }}</div>
+        <div v-if="f.favor === 1" class="favor">⭐</div>
       </div>
     </el-scrollbar>
   </div>

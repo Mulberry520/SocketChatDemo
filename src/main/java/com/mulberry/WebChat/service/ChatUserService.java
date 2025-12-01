@@ -7,21 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 public interface ChatUserService {
-    enum Status {
-        ONLINE("ONLINE"),
-        OFFLINE("OFFLINE"),
-        BANNED("BANNED");
-
-        private final String status;
-        Status(String status) {
-            this.status = status;
-        }
-
-        public String getStatus() {
-            return this.status;
-        }
-    }
-
     UserDetailDTO getUserInfo(UserDetails userDetail);
 
     void updateUserInfo(UserDetailDTO updates);

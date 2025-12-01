@@ -1,12 +1,13 @@
 package com.mulberry.WebChat.service.impl;
 
-import com.mulberry.WebChat.dto.FriendRequestDTO;
-import com.mulberry.WebChat.dto.FriendResponseResp;
-import com.mulberry.WebChat.dto.FriendsResp;
+import com.mulberry.WebChat.common.CommonConst;
+import com.mulberry.WebChat.dto.*;
 import com.mulberry.WebChat.exception.BusinessException;
 import com.mulberry.WebChat.mapper.ChatUserMapper;
+import com.mulberry.WebChat.mapper.FriendRequestMapper;
 import com.mulberry.WebChat.mapper.FriendshipMapper;
 import com.mulberry.WebChat.service.FriendshipService;
+import com.mulberry.WebChat.util.FileLoadUtil;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -16,129 +17,130 @@ import java.util.List;
 public class FriendshipServiceImpl implements FriendshipService {
     private final ChatUserMapper userMapper;
     private final FriendshipMapper friendMapper;
+    private final FriendRequestMapper requestMapper;
+    private final FileLoadUtil fileLoadUtil;
 
     public FriendshipServiceImpl(
             ChatUserMapper userMapper,
-            FriendshipMapper friendMapper
+            FriendshipMapper friendMapper,
+            FriendRequestMapper requestMapper,
+            FileLoadUtil fileLoadUtil
     ) {
         this.userMapper = userMapper;
         this.friendMapper = friendMapper;
+        this.requestMapper = requestMapper;
+        this.fileLoadUtil = fileLoadUtil;
     }
 
     @Override
-    public List<FriendsResp> getFriends(UserDetails userDetails) {
-        Long userId = userMapper.selectIdByName(userDetails.getUsername());
-        List<FriendsResp> friendships = friendMapper.selectFriendById(userId);
-        for (FriendsResp friend : friendships) {
-            String friendUsername = userMapper.selectNameById(friend.getFriendId());
-            friend.setFriendStatus(userMapper.selectStatusByName(friendUsername));
-            friend.setFriendUsername(friendUsername);
+    public List<FriendListResp> getFriends(UserDetails userDetails) {
+        List<FriendListResp> friends = friendMapper.selectFriendNames(userDetails.getUsername());
+        for (FriendListResp friend : friends) {
+            if (friend.getAlias() == null) {
+                friend.setAlias(friend.getFriendUsername());
+            }
         }
-        return friendships;
+        return friends;
     }
 
     @Override
-    public void requestFriend(FriendRequestDTO friendRequest) {
-        Long userId = userMapper.selectIdByName(friendRequest.getUsername());
-        Long friendId = userMapper.selectIdByName(friendRequest.getFriendUsername());
-        if (userId == null || friendId == null) {
-            throw new BusinessException("Can't find target user");
-        }
-        if (userId.equals(friendId)) {
-            throw new IllegalArgumentException("Can't request friend with self");
-        }
-        if (friendMapper.selectFriendshipIfExists(userId, friendId) != null) {
-            throw new IllegalArgumentException("Friendship already exists");
+    public void updateFriendInfo(UserDetails userDetails, FriendUpdateReq friendUpdateInfo) {
+        String username = userDetails.getUsername();
+        String friendUsername = friendUpdateInfo.getFriendUsername();
+        if (friendMapper.selectIfFriendExists(username, friendUsername) == null) {
+            throw new BusinessException("Not your friend");
         }
 
-        String alias = friendRequest.getAlias();
-        if (alias == null) {
-            alias = userMapper.selectNicknameById(friendId);
+        String newAlias = friendUpdateInfo.getAlias();
+        Boolean isFavor = friendUpdateInfo.getIsFavor();
+        if (newAlias != null) {
+            friendMapper.updateFriendAlias(username, friendUsername, newAlias);
         }
-        String information = friendRequest.getInformation();
-        if (information == null || information.trim().isEmpty()) {
-            information = "Hello, I'm " + friendRequest.getUsername();
+        if (isFavor != null) {
+            friendMapper.updateFriendFavor(username, friendUsername, (isFavor) ? 1 : 0);
+        }
+    }
+
+    @Override
+    public void deleteFriend(UserDetails userDetails, String friendUsername) {
+        String username = userDetails.getUsername();
+        if (friendMapper.selectIfFriendExists(username, friendUsername) == null) {
+            throw new BusinessException("Not your friend");
+        }
+        friendMapper.deleteFriendshipByName(username, friendUsername);
+        friendMapper.deleteFriendshipByName(friendUsername, username);
+    }
+
+    @Override
+    public FriendDetailsResp getFriendDetail(UserDetails userDetails, String friendUsername) {
+        String username = userDetails.getUsername();
+        if (friendMapper.selectIfFriendExists(username, friendUsername) == null) {
+            throw new BusinessException("Not your friend");
         }
 
-        friendMapper.insertFriendship(
-                userId,
-                friendId,
-                alias,
-                Status.UNVERIFIED.getStatus(),
-                information
+        FriendDetailsResp friendInfo = userMapper.selectByFriend(friendUsername);
+        String friendAvatar = friendInfo.getAvatar();
+        if (friendAvatar != null) {
+            friendInfo.setAvatar(fileLoadUtil.generateSignedUrl(friendAvatar));
+        }
+        String alias = friendMapper.selectFriendAlias(username, friendUsername);
+        friendInfo.setAlias((alias == null) ? friendUsername : alias);
+        Integer isFavor = friendMapper.selectFriendIsFavor(username, friendUsername);
+        friendInfo.setIsFavor((isFavor == 1) ? true : false);
+
+        return friendInfo;
+    }
+
+    @Override
+    public List<RequestReceivedResp> getFriendRequestsReceived(UserDetails userDetails) {
+        List<RequestReceivedResp> receivedRequests = requestMapper.selectRequestsReceived(userDetails.getUsername());
+        return receivedRequests;
+    }
+
+    @Override
+    public List<RequestSentResp> getFriendRequestsSent(UserDetails userDetails) {
+        List<RequestSentResp> sentRequests = requestMapper.selectRequestsSent(userDetails.getUsername());
+        return sentRequests;
+    }
+
+    @Override
+    public void sendFriendRequest(UserDetails userDetails, RequestSendReq sendRequest) {
+        String username = userDetails.getUsername();
+        String targetName = sendRequest.getTargetUser();
+        if (friendMapper.selectIfFriendExists(username, targetName) != null) {
+            throw new BusinessException("Friend already exists");
+        }
+        if (userMapper.selectIdByName(targetName) == null) {
+            throw new BusinessException("Target user don't exists");
+        }
+
+        requestMapper.insertRequest(
+                username,
+                targetName,
+                sendRequest.getInformation(),
+                CommonConst.FRIENDSHIP_UNVERIFIED
         );
     }
 
     @Override
-    public List<FriendRequestDTO> getFriendRequest(UserDetails userDetails) {
-        Long userId = userMapper.selectIdByName(userDetails.getUsername());
-        List<FriendRequestDTO> friendRequests = friendMapper.selectFriendRequestByUserId(userId);
-        for (FriendRequestDTO request : friendRequests) {
-            request.setFriendUsername(userMapper.selectNameById(request.getFriendId()));
-        }
-        return friendRequests;
-    }
-
-    @Override
-    public void deleteFriendship(UserDetails userDetails, Long friendshipId) {
-        FriendRequestDTO friendship = friendMapper.selectFriendshipById(friendshipId);
-        Long userId = friendship.getUserId();
-        if (!userMapper.selectNameById(userId).equals(userDetails.getUsername())) {
-            throw new BusinessException("Not your friendship");
+    public void handleFriendRequestReceived(UserDetails userDetails, RequestHandleReq handleRequest) {
+        String username = userDetails.getUsername();
+        String friendUsername = handleRequest.getRequestUser();
+        if (friendMapper.selectIfFriendExists(username, friendUsername) != null) {
+            throw new BusinessException("Friend already exists");
         }
 
-        if (friendship.getStatus().equals(Status.APPROVED.getStatus())) {
-            friendMapper.updateStatusById(friendship.getFriendId(), userId, Status.UNVERIFIED.getStatus());
-        }
-        int affected = friendMapper.deleteFriendshipById(friendshipId);
-        if (affected != 1) {
-            throw new BusinessException("Delete friendship failed");
-        }
-    }
-
-    @Override
-    public List<FriendResponseResp> getResponseRequest(UserDetails userDetails) {
-        Long userId = userMapper.selectIdByName(userDetails.getUsername());
-        List<FriendResponseResp> responses = friendMapper.selectFriendshipAboutUser(userId);
-        for (FriendResponseResp response : responses) {
-            Long requestUserId = response.getUserId();
-            response.setRequestUsername(userMapper.selectNameById(requestUserId));
-            response.setRequestNickname(userMapper.selectNicknameById(requestUserId));
-        }
-        return responses;
-    }
-
-    @Override
-    public void responseFriendRequest(UserDetails userDetails, Long friendshipId, String operation) {
-        FriendRequestDTO friendship = friendMapper.selectFriendshipById(friendshipId);
-        Long currUserId = friendship.getFriendId();
-        Long requestFriendId = friendship.getUserId();
-        if (!userMapper.selectNameById(currUserId).equals(userDetails.getUsername())) {
-            throw new BusinessException("Friend request not for you");
-        }
-
-        String currStatus = friendship.getStatus();
-        if (currStatus.equals(Status.APPROVED.getStatus())) {
-            throw new BusinessException("You have approved this friend request");
-        }
-
-        if (operation.equals(Status.REJECTED.getStatus())) {
-            friendMapper.updateStatusById(requestFriendId, currUserId, operation);
+        if (handleRequest.getIsApprove() == true) {
+            friendMapper.insertFriendship(username, friendUsername);
+            friendMapper.insertFriendship(friendUsername, username);
+            requestMapper.updateRequestStatus(username, friendUsername, CommonConst.FRIENDSHIP_APPROVED);
             return;
         }
+        requestMapper.updateRequestStatus(username, friendUsername, CommonConst.FRIENDSHIP_REJECTED);
+    }
 
-        if (operation.equals(Status.APPROVED.getStatus())) {
-            friendMapper.insertFriendship(
-                    currUserId,
-                    requestFriendId,
-                    userMapper.selectNicknameById(requestFriendId),
-                    operation,
-                    ""
-            );
-            friendMapper.updateStatusById(requestFriendId, currUserId, operation);
-            return;
-        }
-
-        throw new IllegalArgumentException("Wrong operation");
+    @Override
+    public void deleteFriendRequestSent(UserDetails userDetails, Long requestId) {
+        requestMapper.deleteRequestSentById(requestId, userDetails.getUsername());
     }
 }

@@ -44,7 +44,6 @@ const selectRoom = (roomId: string) => {
 </script>
 
 <style scoped>
-/* 复用你原有的样式 */
 .panel-header {
   padding: 12px;
   border-bottom: 1px solid #eee;

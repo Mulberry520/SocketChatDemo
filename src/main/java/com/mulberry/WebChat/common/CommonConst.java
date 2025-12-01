@@ -3,6 +3,7 @@ package com.mulberry.WebChat.common;
 public class CommonConst {
     public static final String SUCCESS_MSG = "Operation success";
     public static final String ERROR_MSG = "Operation failed";
+
     public static final Integer SUCCESS_CODE = 200;
     public static final Integer ERROR_CODE = 400;
     public static final Integer TOKEN_EXPIRE = 401;
@@ -21,4 +22,12 @@ public class CommonConst {
 
     public static final String AVATAR_FOLDER_PREFIX = "user/avatar/";
 
+    public static final String FRIENDSHIP_APPROVED = "approved";
+    public static final String FRIENDSHIP_REJECTED = "rejected";
+    public static final String FRIENDSHIP_BLOCKED = "blocked";
+    public static final String FRIENDSHIP_UNVERIFIED = "unverified";
+
+    public static final String STATUS_ONLINE = "ONLINE";
+    public static final String STATUS_OFFLINE = "ONLINE";
+    public static final String STATUS_BANNED = "ONLINE";
 }

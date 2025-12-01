@@ -76,7 +76,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         addRefreshTokenToRedis(refreshToken, username);
         addRefreshTokenToCookie(response, refreshToken);
 
-        userMapper.updateStatusByName(ChatUserService.Status.ONLINE.getStatus(), username);
+        userMapper.updateStatusByName(CommonConst.STATUS_ONLINE, username);
         return jwtUtil.generateAccessToken(username);
     }
 
@@ -114,7 +114,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         template.delete(CommonConst.REDIS_REFRESH_PREFIX + refreshToken);
         template.delete(CommonConst.USER_ROLE_PREFIX + username);
-        userMapper.updateStatusByName(ChatUserService.Status.OFFLINE.getStatus(), username);
+        userMapper.updateStatusByName(CommonConst.STATUS_OFFLINE, username);
     }
 
     @Override
@@ -141,7 +141,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String refreshToken = extraTokenFromCookie(request);
         template.delete(CommonConst.REDIS_REFRESH_PREFIX + refreshToken);
         template.delete(CommonConst.USER_ROLE_PREFIX + username);
-        userMapper.updateStatusByName(ChatUserService.Status.OFFLINE.getStatus(), username);
+        userMapper.updateStatusByName(CommonConst.STATUS_OFFLINE, username);
     }
 
     private String extraTokenFromCookie(HttpServletRequest request) {

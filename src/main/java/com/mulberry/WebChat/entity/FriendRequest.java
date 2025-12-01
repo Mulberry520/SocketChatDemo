@@ -5,11 +5,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class Friendship {
+public class FriendRequest {
     private Long id;
-    private String username;
-    private String friendUsername;
-    private String alias;
-    private Integer favor;
+    private String requestUser;
+    private String targetUser;
+    private String information;
+    private String status;
     private LocalDateTime createTime;
 }

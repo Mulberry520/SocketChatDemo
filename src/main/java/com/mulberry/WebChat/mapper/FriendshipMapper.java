@@ -1,54 +1,57 @@
 package com.mulberry.WebChat.mapper;
 
-import com.mulberry.WebChat.dto.FriendRequestDTO;
-import com.mulberry.WebChat.dto.FriendResponseResp;
-import com.mulberry.WebChat.dto.FriendsResp;
+import com.mulberry.WebChat.dto.*;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
 @Mapper
 public interface FriendshipMapper {
-    @Select("select friend_id, alias, favor from friendship where user_id = #{user_id} and status = 'approved'")
-    List<FriendsResp> selectFriendById(@Param("user_id") Long userId);
+    @Select("select friend_username, alias from friendship where username = #{username}")
+    List<FriendListResp> selectFriendNames(@Param("username") String username);
 
-    @Select("select id from friendship where user_id = #{user_id} and friend_id = #{friend_id}")
-    Long selectFriendshipIfExists(
-            @Param("user_id") Long userId,
-            @Param("friend_id") Long friendId
+    @Select("select id from friendship where username = #{username} and friend_username = #{friend_username}")
+    Long selectIfFriendExists(
+            @Param("username") String username,
+            @Param("friend_username") String friendUsername
     );
 
-    @Select("select friend_id from friendship where id = #{id} and user_id = #{user_id}")
-    Long selectFriendIdByUser(
-            @Param("id") Long friendshipId,
-            @Param("user_id") Long UserId
+    @Select("select alias from friendship where username = #{username} and friend_username = #{friend_username}")
+    String selectFriendAlias(
+            @Param("username") String username,
+            @Param("friend_username") String friendUsername
     );
 
-    @Select("select * from friendship where user_id = #{user_id} and status != 'blocked'")
-    List<FriendRequestDTO> selectFriendRequestByUserId(@Param("user_id") Long userId);
+    @Select("select favor from friendship where username = #{username} and friend_username = #{friend_username}")
+    Integer selectFriendIsFavor(
+            @Param("username") String username,
+            @Param("friend_username") String friendUsername
+    );
 
-    @Select("select * from friendship where id = #{id}")
-    FriendRequestDTO selectFriendshipById(@Param("id") Long friendshipId);
 
-    @Select("select * from friendship where friend_id = #{friend_id} and status = 'unverified'")
-    List<FriendResponseResp> selectFriendshipAboutUser(@Param("friend_id") Long userId);
-
-    @Insert("insert into friendship (user_id, friend_id, alias, status, information) value (#{user_id}, #{friend_id}, #{alias}, #{status}, #{information})")
+    @Insert("insert into friendship (username, friend_username) values (#{username}, #{friend_username})")
     int insertFriendship(
-            @Param("user_id") Long userId,
-            @Param("friend_id") Long friendId,
-            @Param("alias") String alias,
-            @Param("status") String status,
-            @Param("information") String information
+            @Param("username") String username,
+            @Param("friend_username") String friendUsername
     );
 
-    @Update("update friendship set status = #{status} where user_id = #{user_id} and friend_id = #{friend_id}")
-    int updateStatusById(
-            @Param("user_id") Long userId,
-            @Param("friend_id") Long friendId,
-            @Param("status") String status
+    @Update("update friendship set alias = #{alias} where username = #{username} and friend_username = #{friend_username}")
+    int updateFriendAlias(
+            @Param("username") String username,
+            @Param("friend_username") String friendUsername,
+            @Param("alias") String newAlias
     );
 
-    @Delete("delete from friendship where id = #{id}")
-    int deleteFriendshipById(@Param("id") Long friendshipId);
+    @Update("update friendship set favor = #{favor} where username = #{username} and friend_username = #{friend_username}")
+    int updateFriendFavor(
+            @Param("username") String username,
+            @Param("friend_username") String friendUsername,
+            @Param("favor") Integer isFavor
+    );
+
+    @Delete("delete from friendship where username = #{username} and friend_username = #{friendUsername}")
+    int deleteFriendshipByName(
+            @Param("username") String username,
+            @Param("friend_username") String friendUsername
+    );
 }

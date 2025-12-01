@@ -1,38 +1,26 @@
 package com.mulberry.WebChat.service;
 
-import com.mulberry.WebChat.dto.FriendRequestDTO;
-import com.mulberry.WebChat.dto.FriendResponseResp;
-import com.mulberry.WebChat.dto.FriendsResp;
+import com.mulberry.WebChat.dto.*;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 
 public interface FriendshipService {
-    enum Status {
-        APPROVED("approved"),
-        REJECTED("rejected"),
-        BLOCKED("blocked"),
-        UNVERIFIED("unverified");
+    List<FriendListResp> getFriends(UserDetails userDetails);
 
-        private final String status;
-        Status(String status) {
-            this.status = status;
-        }
+    FriendDetailsResp getFriendDetail(UserDetails userDetails, String friendUsername);
 
-        public String getStatus() {
-            return this.status;
-        }
-    }
+    void updateFriendInfo(UserDetails userDetails, FriendUpdateReq friendUpdateInfo);
 
-    List<FriendsResp> getFriends(UserDetails userDetails);
+    void deleteFriend(UserDetails userDetails, String friendUsername);
 
-    void requestFriend(FriendRequestDTO friendRequest);
+    List<RequestReceivedResp> getFriendRequestsReceived(UserDetails userDetails);
 
-    List<FriendRequestDTO> getFriendRequest(UserDetails userDetails);
+    void handleFriendRequestReceived(UserDetails userDetails, RequestHandleReq handleRequest);
 
-    void deleteFriendship(UserDetails userDetails, Long friendshipId);
+    List<RequestSentResp> getFriendRequestsSent(UserDetails userDetails);
 
-    List<FriendResponseResp> getResponseRequest(UserDetails userDetails);
+    void sendFriendRequest(UserDetails userDetails, RequestSendReq sendRequest);
 
-    void responseFriendRequest(UserDetails userDetails, Long friendshipId, String operation);
+    void deleteFriendRequestSent(UserDetails userDetails, Long requestId);
 }

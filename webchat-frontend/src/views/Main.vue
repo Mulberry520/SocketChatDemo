@@ -86,7 +86,7 @@
         <ChatRoomListView
           :rooms="chatRooms"
           :selected-room-id="selectedRoomId"
-          @select="selectedRoomId = $event"
+          @select="handleSelectRoom"
         />
       </template>
     </div>
@@ -95,10 +95,7 @@
     <div class="main-content">
       <template v-if="activeTab === 'rooms'">
         <ChatRoomDetailView
-          ref="roomDetailRef"
           :room="selectedRoom"
-          @join="handleJoinRoom"
-          @send-message="handleSendMessage"
         />
       </template>
 
@@ -136,27 +133,30 @@ import FriendListView from '@/components/FriendListView.vue'
 import UserinfoCardView from '@/components/UserinfoCardView.vue'
 import ChatRoomDetailView from "@/components/ChatRoomDetailView.vue"
 import ChatRoomListView from "@/components/ChatRoomListView.vue"
-import {getUserAvatar, getUserinfo} from "@/api/user.ts";
+import {getUserAvatar} from "@/api/user.ts";
 import {logout} from "@/api/auth.ts";
 import router from "@/router";
 import {ElMessage} from "element-plus";
-import {connect, isConnectedToWebSocket, publish, subscribe} from "@/utils/websocket.ts";
 
 type ActiveTab = 'chats' | 'contacts' | 'rooms'
-
 const activeTab = ref<ActiveTab>('chats')
+
 const showUserInfo = ref(false)
 const userAvatar = ref<string>(defaultAvatar)
 const searchQuery = ref('')
 
 const chatRooms = ref([
-  { id: 'public', name: 'Public Room', description: 'All users can join', isJoined: false }
+  { id: 'public', name: 'Public Room', description: 'All users can join', isJoined: false },
+  { id: 'test', name: 'TEst Room', description: 'Special users can join', isJoined: false }
 ])
 const selectedRoomId = ref<string | null>(null)
-const joining = ref(false)
 const selectedRoom = computed(() => {
   return chatRooms.value.find(r => r.id === selectedRoomId.value) || null
 })
+
+const handleSelectRoom = (roomId: string) => {
+  selectedRoomId.value = roomId
+}
 
 
 const loadUserData = async () => {
@@ -204,50 +204,6 @@ const handleCommand = (command: string) => {
     default:
       console.log('Unknown command:', command)
   }
-}
-
-// 拿到子组件实例
-const roomDetailRef = ref<InstanceType<typeof ChatRoomDetailView> | null>(null)
-
-// 加入房间
-const handleJoinRoom = async (room: any) => {
-  joining.value = true
-  try {
-    // 连接 WebSocket
-    if (!isConnectedToWebSocket()) {
-      await new Promise<void>((resolve, reject) => {
-        connect(
-          () => resolve(),
-          (err) => reject(err)
-        )
-      })
-    }
-
-    // 订阅房间消息
-    const topic = `/topic/room/${room.id}`
-    subscribe(topic, (msg: any) => {
-      roomDetailRef.value?.addMessage({
-        sender: msg.sender || 'Anonymous',
-        content: msg.content || ''
-      })
-    })
-
-    // 更新状态
-    room.isJoined = true
-    roomDetailRef.value?.setConnected(true)
-    ElMessage.success(`Joined ${room.name}`)
-  } catch (err) {
-    ElMessage.error('Failed to join room')
-    console.error(err)
-  } finally {
-    joining.value = false
-  }
-}
-
-// 发送消息
-const handleSendMessage = (content: string) => {
-  if (!selectedRoom.value) return
-  publish(`/app/room/${selectedRoom.value.id}/message`, { content })
 }
 
 onMounted(() => {

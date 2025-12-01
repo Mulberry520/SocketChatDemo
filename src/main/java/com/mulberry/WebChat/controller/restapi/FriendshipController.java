@@ -1,9 +1,9 @@
 package com.mulberry.WebChat.controller.restapi;
 
 import com.mulberry.WebChat.common.R;
-import com.mulberry.WebChat.dto.FriendRequestDTO;
-import com.mulberry.WebChat.dto.FriendResponseResp;
-import com.mulberry.WebChat.dto.FriendsResp;
+import com.mulberry.WebChat.dto.FriendDetailsResp;
+import com.mulberry.WebChat.dto.FriendListResp;
+import com.mulberry.WebChat.dto.FriendUpdateReq;
 import com.mulberry.WebChat.service.FriendshipService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,50 +21,36 @@ public class FriendshipController {
         this.friendService = friendService;
     }
 
-    @GetMapping
-    public R<List<FriendsResp>> getFriends(@AuthenticationPrincipal UserDetails userDetails) {
-        List<FriendsResp> friends = friendService.getFriends(userDetails);
+    @GetMapping("/all")
+    public R<List<FriendListResp>> getFriends(@AuthenticationPrincipal UserDetails userDetails) {
+        List<FriendListResp> friends = friendService.getFriends(userDetails);
         return R.success(friends);
     }
 
-    @GetMapping("/request")
-    public R<List<FriendRequestDTO>> getRequests(@AuthenticationPrincipal UserDetails userDetails) {
-        List<FriendRequestDTO> requestList = friendService.getFriendRequest(userDetails);
-        return R.success(requestList);
+    @GetMapping
+    public R<FriendDetailsResp> getFriendDetail(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("friend") String friendUsername
+    ) {
+        FriendDetailsResp friendDetail = friendService.getFriendDetail(userDetails, friendUsername);
+        return R.success(friendDetail);
     }
 
-    @PostMapping("/request")
-    public R<Void> requestFriend(
-            @RequestBody @Valid FriendRequestDTO friendRequest,
-            @AuthenticationPrincipal UserDetails userDetails
+    @PostMapping
+    public R<Void> updateFriend(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody @Valid FriendUpdateReq friendUpdates
     ) {
-        friendRequest.setUsername(userDetails.getUsername());
-        friendService.requestFriend(friendRequest);
+        friendService.updateFriendInfo(userDetails, friendUpdates);
         return R.success();
     }
 
-    @GetMapping("/response")
-    public R<List<FriendResponseResp>> getResponse(@AuthenticationPrincipal UserDetails userDetails) {
-        List<FriendResponseResp> responses = friendService.getResponseRequest(userDetails);
-        return R.success(responses);
-    }
-
-    @PostMapping("/response/{id}")
-    public R<Void> handleFriendRequest(
-            @PathVariable("id") Long friendRequestId,
-            @RequestParam("operation") String operation,
-            @AuthenticationPrincipal UserDetails userDetails
+    @DeleteMapping
+    public R<Void> deleteFriend(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("friend") String friendUsername
     ) {
-        friendService.responseFriendRequest(userDetails, friendRequestId, operation);
-        return R.success();
-    }
-
-    @DeleteMapping("/{id}")
-    public R<Void> deleteFriendship(
-            @PathVariable("id") Long friendshipId,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        friendService.deleteFriendship(userDetails, friendshipId);
+        friendService.deleteFriend(userDetails, friendUsername);
         return R.success();
     }
 }
