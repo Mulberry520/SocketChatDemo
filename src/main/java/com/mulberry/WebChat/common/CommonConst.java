@@ -31,4 +31,8 @@ public class CommonConst {
     public static final String STATUS_ONLINE = "ONLINE";
     public static final String STATUS_OFFLINE = "ONLINE";
     public static final String STATUS_BANNED = "ONLINE";
+
+    public static final String MESSAGE_TYPE_JOIN = "JOIN";
+    public static final String MESSAGE_TYPE_QUIT = "QUIT";
+    public static final String MESSAGE_TYPE_MESSAGE = "MESSAGE";
 }

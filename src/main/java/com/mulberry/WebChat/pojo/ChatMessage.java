@@ -2,20 +2,24 @@ package com.mulberry.WebChat.pojo;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 public class ChatMessage {
+    private String type;
     private String content;
     private String sender;
     private String recipient;
-    private Long timestamp;
+    private LocalDateTime time;
 
     public ChatMessage() {
     }
 
-    public ChatMessage(String content, String sender, Long timestamp) {
+    public ChatMessage(String type, String recipient, String content) {
+        this.type = type;
         this.content = content;
-        this.sender = sender;
-        this.recipient = null;
-        this.timestamp = timestamp;
+        this.sender = "SYSTEM";
+        this.recipient = recipient;
+        this.time = LocalDateTime.now();
     }
 }

@@ -27,7 +27,7 @@ server:
 custom:
   jwt:
     secret-key: ${jwt.secret-key}
-    access-expire: 600000
+    access-expire: 3600000
     refresh-expire: 86400000
   oss:
     endpoint: ${oss.endpoint}
