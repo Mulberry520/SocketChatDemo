@@ -21,11 +21,12 @@ public class CommonConst {
     public static final String DEFAULT_ROLE = USER_ROLE;
 
     public static final String AVATAR_FOLDER_PREFIX = "user/avatar/";
+    public static final String ROOM_AVATAR_FOLDER = "room/avatar/";
 
-    public static final String FRIENDSHIP_APPROVED = "approved";
-    public static final String FRIENDSHIP_REJECTED = "rejected";
-    public static final String FRIENDSHIP_BLOCKED = "blocked";
-    public static final String FRIENDSHIP_UNVERIFIED = "unverified";
+    public static final String REQUEST_APPROVED = "approved";
+    public static final String REQUEST_REJECTED = "rejected";
+    public static final String REQUEST_BLOCKED = "blocked";
+    public static final String REQUEST_UNVERIFIED = "unverified";
 
     public static final String STATUS_ONLINE = "ONLINE";
     public static final String STATUS_OFFLINE = "ONLINE";

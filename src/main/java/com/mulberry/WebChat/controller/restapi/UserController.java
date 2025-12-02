@@ -23,7 +23,7 @@ public class UserController {
     @GetMapping("/userinfo")
     public R<UserDetailDTO> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
         UserDetailDTO userInfo = userService.getUserInfo(userDetails);
-        return R.success( userInfo);
+        return R.success(userInfo);
     }
 
     @PostMapping("/userinfo")

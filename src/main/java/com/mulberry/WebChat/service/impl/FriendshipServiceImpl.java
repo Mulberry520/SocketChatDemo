@@ -86,21 +86,19 @@ public class FriendshipServiceImpl implements FriendshipService {
         String alias = friendMapper.selectFriendAlias(username, friendUsername);
         friendInfo.setAlias((alias == null) ? friendUsername : alias);
         Integer isFavor = friendMapper.selectFriendIsFavor(username, friendUsername);
-        friendInfo.setIsFavor((isFavor == 1) ? true : false);
+        friendInfo.setIsFavor(isFavor == 1);
 
         return friendInfo;
     }
 
     @Override
     public List<RequestReceivedResp> getFriendRequestsReceived(UserDetails userDetails) {
-        List<RequestReceivedResp> receivedRequests = requestMapper.selectRequestsReceived(userDetails.getUsername());
-        return receivedRequests;
+        return requestMapper.selectRequestsReceived(userDetails.getUsername());
     }
 
     @Override
     public List<RequestSentResp> getFriendRequestsSent(UserDetails userDetails) {
-        List<RequestSentResp> sentRequests = requestMapper.selectRequestsSent(userDetails.getUsername());
-        return sentRequests;
+        return requestMapper.selectRequestsSent(userDetails.getUsername());
     }
 
     @Override
@@ -118,7 +116,7 @@ public class FriendshipServiceImpl implements FriendshipService {
                 username,
                 targetName,
                 sendRequest.getInformation(),
-                CommonConst.FRIENDSHIP_UNVERIFIED
+                CommonConst.REQUEST_UNVERIFIED
         );
     }
 
@@ -130,13 +128,13 @@ public class FriendshipServiceImpl implements FriendshipService {
             throw new BusinessException("Friend already exists");
         }
 
-        if (handleRequest.getIsApprove() == true) {
+        if (handleRequest.getIsApprove()) {
             friendMapper.insertFriendship(username, friendUsername);
             friendMapper.insertFriendship(friendUsername, username);
-            requestMapper.updateRequestStatus(username, friendUsername, CommonConst.FRIENDSHIP_APPROVED);
+            requestMapper.updateRequestStatus(username, friendUsername, CommonConst.REQUEST_APPROVED);
             return;
         }
-        requestMapper.updateRequestStatus(username, friendUsername, CommonConst.FRIENDSHIP_REJECTED);
+        requestMapper.updateRequestStatus(username, friendUsername, CommonConst.REQUEST_REJECTED);
     }
 
     @Override
