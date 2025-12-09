@@ -133,6 +133,16 @@ import {useUserStore} from "@/stores/userStore.ts";
 import {getFriendList} from "@/api/friend.ts";
 import {useFriendStore} from "@/stores/friendStore.ts";
 import {getUserAvatar, getUserinfo} from "@/api/user.ts";
+import {getJoinedRoomList} from "@/api/room.ts";
+import {useRoomStore} from "@/stores/roomStore.ts";
+import type {IFrame} from "@stomp/stompjs";
+import type {ChatMessage} from "@/types/room.ts";
+import {
+  connectWebSocket,
+  initWebSocket,
+  setOnConnectedCallback, setOnDisconnectedCallback, setOnErrorCallback,
+  setOnMessageReceivedCallback
+} from "@/utils/websocket.ts";
 
 type ActiveTab = 'chats' | 'contacts' | 'rooms' | null
 const activeTab = ref<ActiveTab>(null)
@@ -141,8 +151,31 @@ const showUserInfo = ref(false)
 
 const userStore = useUserStore()
 const friendStore = useFriendStore()
+const roomStore = useRoomStore()
 
 
+const handleWsConnected = (frame: IFrame) => {
+  console.log("🟢 [Main] WebSocket connected successfully!", frame);
+  ElMessage.success('WebSocket 连接已建立');
+  // TODO
+};
+
+const handleWsDisconnected = () => {
+  console.log("🔴 [Main] WebSocket disconnected.");
+  ElMessage.info('WebSocket 连接已断开');
+  // TODO
+};
+
+const handleWsError = (frame: IFrame) => {
+  console.error("💥 [Main] WebSocket error occurred:", frame);
+  ElMessage.error(`WebSocket 错误: ${frame.headers['message'] || '未知错误'}`);
+};
+
+const handleWsMessageReceived = (message: ChatMessage) => {
+  console.log("📬 [Main] Message received via websocketUtil:", message);
+  const roomName = message.recipient || 'world';
+  roomStore.addMessageToRoom(roomName, message);
+};
 
 
 const handleLogout = async () => {
@@ -189,9 +222,33 @@ onMounted(async () => {
     const avatarRes = await getUserAvatar()
     userStore.setAvatar(avatarRes.data)
 
-    const res = await getFriendList()
-    friendStore.setFriendList(res.data)
-    console.log(res.data)
+    const friendListRes = await getFriendList()
+    friendStore.setFriendList(friendListRes.data)
+
+    const roomListRes = await getJoinedRoomList()
+    roomStore.setRoomList(roomListRes.data)
+
+    initWebSocket({
+      brokerURL: 'ws://localhost:8080/ws',
+      debug: import.meta.env.DEV, // 开发模式下开启调试
+      reconnectDelay: 3000,
+      getToken: () => {
+        return userStore.accessToken
+      },
+    });
+
+    setOnMessageReceivedCallback(handleWsMessageReceived); // <-- Use the setter
+    setOnConnectedCallback(handleWsConnected);
+    setOnDisconnectedCallback(handleWsDisconnected);
+    setOnErrorCallback(handleWsError);
+
+    try {
+      await connectWebSocket();
+      console.log("[Main] onMounted - WebSocket connection attempt finished.");
+    } catch (error) {
+      console.error("[Main] onMounted - Failed to connect WebSocket:", error);
+      ElMessage.error('WebSocket 连接失败: ' + (error as Error).message);
+    }
   } catch (err) {
     console.error('[ERROR] Failed to load friend list:', err);
     ElMessage.error('加载用户信息失败')

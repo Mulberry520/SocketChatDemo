@@ -36,4 +36,7 @@ public interface ChatRoomMapper {
 
     @Select("select room_name, is_public, information from room where create_user = #{create_user}")
     List<RoomCreatedDTO> selectRoomsByCreator(@Param("create_user") String username);
+
+    @Select("select avatar from room where room_name = #{room_name}")
+    String selectAvatar(@Param("room_name") String roomName);
 }

@@ -2,6 +2,7 @@ export interface RoomListResponse {
   roomName: string,
   roomAlias: string | null
   userAlias: string | null
+  avatar: string | null
 }
 
 export interface RoomDetailResponse {
@@ -14,4 +15,12 @@ export interface RoomDetailResponse {
   avatar: string | null,
   members: string[],
   createTime: string
+}
+
+export interface ChatMessage {
+  type: 'info' | 'join' | 'quit' | 'message';
+  content: string | null
+  sender: string
+  recipient: string
+  time: string;
 }

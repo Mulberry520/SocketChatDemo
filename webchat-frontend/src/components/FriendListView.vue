@@ -5,7 +5,7 @@
       :key="item.friendUsername"
       class="friend-item"
       :class="{ active: item.friendUsername === currentFriend?.username }"
-      @click="handleSelect(item)"
+      @click="handleSelect(item.friendUsername)"
     >
       <el-avatar
         :size="45"
@@ -23,20 +23,28 @@ import { useFriendStore } from '@/stores/friendStore'
 import { getFriendDetail } from '@/api/friend'
 import defaultAvatar from '@/assets/defaultAvatar.png'
 import { ElMessage } from 'element-plus'
+import type {FriendDetailResponse} from "@/types/friend.ts";
 
 const friendStore = useFriendStore()
 
 const friendList = computed(() => friendStore.friendList)
 const currentFriend = computed(() => friendStore.currentFriend)
 
-const handleSelect = async (item: { friendUsername: string }) => {
-  if (currentFriend.value?.username === item.friendUsername) {
+const handleSelect = async (username: string) => {
+  if (currentFriend.value?.username === username) {
     return
   }
 
   try {
-    const res = await getFriendDetail(item.friendUsername)
-    friendStore.setCurrentFriend(res.data)
+    const res = await getFriendDetail(username)
+    const friendListItem = friendStore.friendList.find(
+      (item) => item.friendUsername === username
+    )
+
+    const friendDetail:FriendDetailResponse = res.data
+    friendDetail.avatar = friendListItem?.avatar || defaultAvatar
+
+    friendStore.setCurrentFriend(friendDetail)
   } catch (err: any) {
     ElMessage.error(err.message || '加载好友详情失败')
   }

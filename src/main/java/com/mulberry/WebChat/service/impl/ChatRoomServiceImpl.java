@@ -43,6 +43,10 @@ public class ChatRoomServiceImpl implements ChatRoomService {
             if (room.getUserAlias() == null) {
                 room.setUserAlias(username);
             }
+            String roomAvatar = chatRoomMapper.selectAvatar(room.getRoomName());
+            if (roomAvatar != null) {
+                room.setAvatar(fileLoadUtil.generateSignedUrl(roomAvatar));
+            }
         }
 
         return rooms;
@@ -57,10 +61,10 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
         RoomDetailResp roomDetail = chatRoomMapper.selectRoomDetail(roomName);
         roomDetail.setMembers(roomUserMapper.selectUsersByRoom(roomName));
-        String avatar = roomDetail.getAvatar();
-        if (avatar != null) {
-            roomDetail.setAvatar(fileLoadUtil.generateSignedUrl(avatar));
-        }
+//        String avatar = roomDetail.getAvatar();
+//        if (avatar != null) {
+//            roomDetail.setAvatar(fileLoadUtil.generateSignedUrl(avatar));
+//        }
         RoomListResp alias = roomUserMapper.selectAlias(username, roomName);
         roomDetail.setRoomAlias(alias.getRoomAlias());
         roomDetail.setUserAlias(alias.getUserAlias());

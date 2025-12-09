@@ -7,7 +7,7 @@ export const getJoinedRoomList = () => {
 }
 
 export const getRoomDetail = (roomName: string) => {
-  return request.post<ApiResponse<RoomDetailResponse>>('/rooms', {
-    param: { roomName }
+  return request.get<ApiResponse<RoomDetailResponse>>('/rooms', {
+    params: { roomName }
   })
 }

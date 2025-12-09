@@ -119,7 +119,9 @@ const showAliasActions = ref(false)
 const aliasInputRef = ref()
 
 const onAliasFocus = () => {
-  if (!current.value) return
+  if (!current.value) {
+    return
+  }
 
   originalAlias.value = current.value.alias || ''
   tempAlias.value = current.value.alias || ''
@@ -137,6 +139,7 @@ const confirmAlias = async () => {
     alias: newAlias || null,
     isFavor: current.value.isFavor
   }
+  tempAlias.value = ''
 
   try {
     await changeFriendInfo(req)

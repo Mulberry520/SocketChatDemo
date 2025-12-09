@@ -83,12 +83,12 @@ public class FriendshipServiceImpl implements FriendshipService {
         }
 
         FriendDetailsResp friendInfo = userMapper.selectByFriend(friendUsername);
-        String friendAvatar = friendInfo.getAvatar();
-        if (friendAvatar != null) {
-            friendInfo.setAvatar(fileLoadUtil.generateSignedUrl(friendAvatar));
-        }
-        String alias = friendMapper.selectFriendAlias(username, friendUsername);
-        friendInfo.setAlias((alias == null) ? friendUsername : alias);
+//        String friendAvatar = friendInfo.getAvatar();
+//        if (friendAvatar != null) {
+//            friendInfo.setAvatar(fileLoadUtil.generateSignedUrl(friendAvatar));
+//        }
+//        String alias = friendMapper.selectFriendAlias(username, friendUsername);
+//        friendInfo.setAlias((alias == null) ? friendUsername : alias);
         Integer isFavor = friendMapper.selectFriendIsFavor(username, friendUsername);
         friendInfo.setIsFavor(isFavor == 1);
 

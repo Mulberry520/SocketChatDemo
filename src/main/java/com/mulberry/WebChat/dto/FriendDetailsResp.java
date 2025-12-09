@@ -14,7 +14,7 @@ public class FriendDetailsResp {
     private String biography;
     private String email;
     private LocalDate birth;
-    private String avatar;
+//    private String avatar;
     private String alias;
     private Boolean isFavor;
 }

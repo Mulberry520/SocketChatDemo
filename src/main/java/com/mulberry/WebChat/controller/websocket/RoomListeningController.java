@@ -102,6 +102,7 @@ public class RoomListeningController {
         for (String user : listeners) {
             messagingTemplate.convertAndSendToUser(user, "/queue/room-message", message);
         }
+        System.out.println(message.getSender() + " send " + message.getContent() + " to " + message.getRecipient());
     }
 
     private boolean isValid(String username, String roomName) {

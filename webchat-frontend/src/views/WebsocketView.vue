@@ -300,15 +300,6 @@ const performJoinRoom = (roomName: string) => {
   }
 };
 
-// --- Message Handling ---
-// 注意：由于我们直接在 subscribe 中处理消息，这里留空或移除
-/*
-const onMessageReceived = (message: IMessage) => {
-  // This function is no longer used directly by subscribe
-  // Its logic has been moved inline to ensure correct binding
-};
-*/
-
 const sendMessage = () => {
   if (!connected.value) {
     logError("请先连接服务器");
@@ -341,8 +332,7 @@ const sendMessage = () => {
 // --- Lifecycle Hooks ---
 onMounted(() => {
   console.log("🏠 [Component] WebsocketView mounted.");
-  // 页面加载时可以自动尝试连接，也可以让用户手动点击
-  // connect();
+  connect();
 });
 
 onUnmounted(() => {
