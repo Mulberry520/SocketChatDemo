@@ -18,7 +18,7 @@ export interface RoomDetailResponse {
 }
 
 export interface ChatMessage {
-  type: 'info' | 'join' | 'quit' | 'message';
+  type: 'JOIN' | 'QUIT' | 'MESSAGE';
   content: string | null
   sender: string
   recipient: string

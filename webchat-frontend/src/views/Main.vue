@@ -78,8 +78,7 @@
     <!-- 右侧主内容区 -->
     <div class="main-content">
       <template v-if="activeTab === 'chats'">
-        <websocket-view />
-        <h1>TODO</h1>
+        <h1>Welcome, {{ userStore.username }} !</h1>
       </template>
 
       <template v-else-if="activeTab === 'contacts'">
@@ -92,7 +91,7 @@
 
       <template v-else>
         <div class="welcome-text">
-          <h1>Welcome to {{userStore.username}}!</h1>
+          <h1>Welcome, {{ userStore.username }} !</h1>
         </div>
       </template>
     </div>
