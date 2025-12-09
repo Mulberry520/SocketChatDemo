@@ -33,7 +33,7 @@ public class UserListeningRoomService {
         Set<String> listeners = new HashSet<>();
         for (Map.Entry<String, Set<String>> entry : listeningRooms.entrySet()) {
             Set<String> rooms = entry.getValue();
-            if (rooms != null) {
+            if (rooms != null && rooms.contains(roomName)) {
                 listeners.add(entry.getKey());
             }
         }
@@ -43,5 +43,9 @@ public class UserListeningRoomService {
 
     public void clearUser(String username) {
         listeningRooms.remove(username);
+    }
+
+    public void printCurrentUsers() {
+        System.out.println("Current: " + listeningRooms);
     }
 }

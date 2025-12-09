@@ -14,12 +14,4 @@ public class ChatMessage {
 
     public ChatMessage() {
     }
-
-    public ChatMessage(String type, String recipient, String content) {
-        this.type = type;
-        this.content = content;
-        this.sender = "SYSTEM";
-        this.recipient = recipient;
-        this.time = LocalDateTime.now();
-    }
 }

@@ -5,7 +5,7 @@
       <!-- 头像 -->
       <el-avatar
         :size="48"
-        :src="userAvatar"
+        :src="userStore.avatar"
         style="cursor: pointer"
         @click="showUserInfo = true"
       />
@@ -44,10 +44,10 @@
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="lock">Lock</el-dropdown-item>
-              <el-dropdown-item command="feedback">Feedback</el-dropdown-item>
-              <el-dropdown-item command="settings">Settings</el-dropdown-item>
-              <el-dropdown-item divided command="logout">Logout</el-dropdown-item>
+              <el-dropdown-item command="lock">锁定账号</el-dropdown-item>
+              <el-dropdown-item command="feedback">提交反馈</el-dropdown-item>
+              <el-dropdown-item command="settings">更改设置</el-dropdown-item>
+              <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -57,25 +57,7 @@
     <!-- 中间区域 -->
     <div class="middle-panel">
       <template v-if="activeTab === 'chats'">
-        <div class="panel-header">
-          <el-input
-            v-model="searchQuery"
-            placeholder="Search"
-            prefix-icon="el-icon-search"
-            clearable
-            size="small"
-          />
-        </div>
-        <el-scrollbar class="scrollable-content">
-          <div class="chat-item" v-for="i in 5" :key="i">
-            <el-avatar>U</el-avatar>
-            <div class="chat-info">
-              <div class="name">User {{ i }}</div>
-              <div class="last-msg">Hello, how are you?</div>
-            </div>
-            <div class="time">10:{{ i * 5 }}</div>
-          </div>
-        </el-scrollbar>
+        <h1>TODO</h1>
       </template>
 
       <template v-else-if="activeTab === 'contacts'">
@@ -83,26 +65,34 @@
       </template>
 
       <template v-else-if="activeTab == 'rooms'">
-        <ChatRoomListView
-          :rooms="chatRooms"
-          :selected-room-id="selectedRoomId"
-          @select="handleSelectRoom"
-        />
+        <RoomListView />
+      </template>
+
+      <template v-else>
+        <div class="welcome-text">
+          <h1>Welcome</h1>
+        </div>
       </template>
     </div>
 
     <!-- 右侧主内容区 -->
     <div class="main-content">
-      <template v-if="activeTab === 'rooms'">
-        <ChatRoomDetailView
-          :room="selectedRoom"
-        />
+      <template v-if="activeTab === 'chats'">
+        <websocket-view />
+        <h1>TODO</h1>
+      </template>
+
+      <template v-else-if="activeTab === 'contacts'">
+        <FriendDetailView />
+      </template>
+
+      <template v-else-if="activeTab === 'rooms'">
+        <RoomDetailView />
       </template>
 
       <template v-else>
         <div class="welcome-text">
-          <h2>Welcome to Chat!</h2>
-          <p>Select a chat or contact to start messaging.</p>
+          <h1>Welcome to {{userStore.username}}!</h1>
         </div>
       </template>
     </div>
@@ -126,50 +116,34 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref} from 'vue'
-import { Message, User, Setting, ChatDotRound } from '@element-plus/icons-vue'
-import defaultAvatar from '@/assets/defaultAvatar.png'
-import FriendListView from '@/components/FriendListView.vue'
-import UserinfoCardView from '@/components/UserinfoCardView.vue'
-import ChatRoomDetailView from "@/components/ChatRoomDetailView.vue"
-import ChatRoomListView from "@/components/ChatRoomListView.vue"
-import {getUserAvatar} from "@/api/user.ts";
-import {logout} from "@/api/auth.ts";
 import router from "@/router";
 import {ElMessage} from "element-plus";
+import {onMounted, ref} from 'vue'
+import { Message, User, Setting, ChatDotRound } from '@element-plus/icons-vue'
 
-type ActiveTab = 'chats' | 'contacts' | 'rooms'
-const activeTab = ref<ActiveTab>('chats')
+import UserinfoCardView from '@/components/UserinfoCardView.vue'
+import FriendListView from '@/components/FriendListView.vue'
+import FriendDetailView from "@/components/FriendDetailView.vue";
+import RoomListView from "@/components/RoomListView.vue";
+import RoomDetailView from "@/components/RoomDetailView.vue";
+import WebsocketView from "@/views/WebsocketView.vue";
+
+import {logout} from "@/api/auth.ts";
+import {useUserStore} from "@/stores/userStore.ts";
+import {getFriendList} from "@/api/friend.ts";
+import {useFriendStore} from "@/stores/friendStore.ts";
+import {getUserAvatar, getUserinfo} from "@/api/user.ts";
+
+type ActiveTab = 'chats' | 'contacts' | 'rooms' | null
+const activeTab = ref<ActiveTab>(null)
 
 const showUserInfo = ref(false)
-const userAvatar = ref<string>(defaultAvatar)
-const searchQuery = ref('')
 
-const chatRooms = ref([
-  { id: 'public', name: 'Public Room', description: 'All users can join', isJoined: false },
-  { id: 'test', name: 'TEst Room', description: 'Special users can join', isJoined: false }
-])
-const selectedRoomId = ref<string | null>(null)
-const selectedRoom = computed(() => {
-  return chatRooms.value.find(r => r.id === selectedRoomId.value) || null
-})
-
-const handleSelectRoom = (roomId: string) => {
-  selectedRoomId.value = roomId
-}
+const userStore = useUserStore()
+const friendStore = useFriendStore()
 
 
-const loadUserData = async () => {
-  try {
-    const avatarRes = await getUserAvatar()
-    console.log(avatarRes.data)
-    if (avatarRes.data) {
-      userAvatar.value = String(avatarRes.data)
-    }
-  } catch (err) {
-    console.error('Load user data failed')
-  }
-}
+
 
 const handleLogout = async () => {
   const confirmed = window.confirm('Are you sure you want to logout?')
@@ -179,6 +153,7 @@ const handleLogout = async () => {
 
   try {
     await logout()
+    userStore.clearUserinfo()
   } catch (err) {
     console.warn('Logout api wrong', err)
   } finally {
@@ -206,8 +181,21 @@ const handleCommand = (command: string) => {
   }
 }
 
-onMounted(() => {
-  loadUserData()
+onMounted(async () => {
+  try {
+    const userinfoRes = await getUserinfo()
+    userStore.setUserinfo(userinfoRes.data)
+
+    const avatarRes = await getUserAvatar()
+    userStore.setAvatar(avatarRes.data)
+
+    const res = await getFriendList()
+    friendStore.setFriendList(res.data)
+    console.log(res.data)
+  } catch (err) {
+    console.error('[ERROR] Failed to load friend list:', err);
+    ElMessage.error('加载用户信息失败')
+  }
 })
 </script>
 
@@ -229,7 +217,7 @@ onMounted(() => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   z-index: 10;
   justify-content: space-between;
-  height: 100%;
+  height: 98%;
 }
 
 .nav-group,
@@ -312,11 +300,10 @@ onMounted(() => {
   color: #409eff;
 }
 
-/* 确保 SVG 居中且大小一致 */
 .icon-btn svg {
   width: 20px;
   height: 20px;
-  display: block; /* 防止基线对齐问题 */
+  display: block;
 }
 
 /* 中间面板 */
@@ -329,50 +316,6 @@ onMounted(() => {
   height: 100%;
 }
 
-.panel-header {
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-}
-
-.scrollable-content {
-  flex: 1;
-}
-
-.chat-item {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  gap: 12px;
-  cursor: pointer;
-}
-
-.chat-item:hover {
-  background-color: #f5f5f5;
-}
-
-.chat-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.name {
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.last-msg {
-  font-size: 12px;
-  color: #909399;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.time {
-  font-size: 10px;
-  color: #c0c4cc;
-}
-
 /* 主内容区 */
 .main-content {
   flex: 1;
@@ -380,11 +323,12 @@ onMounted(() => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  overflow: auto;
   background: #f0f0f0;
   color: #666;
 }
 
-.welcome-text h2 {
+.welcome-text h1 {
   margin-bottom: 8px;
 }
 </style>

@@ -1,20 +1,20 @@
 <template>
-  <div class="user-info-card">
+  <el-card class="user-info-card" shadow="never">
     <!-- 查看模式 -->
-    <div v-if="!isEditing" class="view-mode">
+    <div v-if="!isEditing">
       <!-- 头像 -->
       <div class="avatar-container">
-        <img :src="avatarUrl" alt="Avatar" class="avatar" />
+        <el-avatar :size="80" :src="avatarUrl" />
       </div>
 
       <!-- 昵称 & 用户名 -->
-      <h3 class="nickname">{{ userInfo.nickname || userInfo.username }}</h3>
-      <p class="username">@{{ userInfo.username }}</p>
+      <h3 class="nickname">{{ userInfo.nickname || userStore.username }}</h3>
+      <p class="username">@{{ userStore.username }}</p>
 
-      <!-- 性别 + 地区（同行） -->
+      <!-- 性别 + 地区 -->
       <div class="row">
         <span v-if="userInfo.gender" class="field">
-          性别：{{ userInfo.gender === 'male' ? '男' : '女' }}
+          性别：{{ displayGender }}
         </span>
         <span v-if="userInfo.region" class="field">
           地区：{{ userInfo.region }}
@@ -44,105 +44,155 @@
 
       <!-- 注册时间 -->
       <div class="row">
-        <span class="field">注册：{{ formatDateTime(userInfo.createTime) }}</span>
+        <span class="field">注册：{{ formatDate(String(userInfo.createTime)) }}</span>
       </div>
 
       <!-- 编辑按钮 -->
       <div class="action-area">
-        <button @click="startEdit" class="btn-edit">编辑个人信息</button>
+        <el-button @click="startEdit" type="primary" plain>编辑个人信息</el-button>
       </div>
     </div>
 
     <!-- 编辑模式 -->
-    <div v-else class="edit-mode">
-      <!-- 头像上传 -->
-      <div class="avatar-editor" @click="triggerFileInput">
-        <img :src="previewAvatar" alt="Preview" class="avatar" />
-        <div class="change-overlay">点击更换</div>
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          @change="handleFileChange"
-          style="display: none"
-        />
+    <div v-else>
+      <!-- 头像区域 -->
+      <div class="avatar-section">
+        <div class="avatar-editor" @click="triggerFileInput">
+          <el-avatar :size="80" :src="previewAvatar" />
+          <div class="change-overlay">点击更换</div>
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            @change="handleFileChange"
+            style="display: none"
+          />
+        </div>
       </div>
 
       <!-- 昵称 -->
-      <div class="form-row">
-        <label>昵称</label>
-        <input v-model="editForm.nickname" type="text" placeholder="昵称" />
-      </div>
+      <el-form-item label="昵称">
+        <el-input v-model="editForm.nickname" placeholder="请输入昵称" />
+      </el-form-item>
 
       <!-- 性别 + 地区（同行） -->
-      <div class="form-row dual">
-        <div class="half">
-          <label>性别</label>
-          <select v-model="editForm.gender">
-            <option value="">保密</option>
-            <option value="male">男</option>
-            <option value="female">女</option>
-          </select>
-        </div>
-        <div class="half">
-          <label>地区</label>
-          <input v-model="editForm.region" type="text" placeholder="例如：北京" />
-        </div>
-      </div>
+      <el-row :gutter="16" class="dual-row">
+        <el-col :span="12">
+          <el-form-item label="性别">
+            <el-select v-model="editForm.gender" placeholder="请选择性别" style="width: 100%">
+              <el-option value="" label="保密" />
+              <el-option value="male" label="男" />
+              <el-option value="female" label="女" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="地区">
+            <el-input v-model="editForm.region" placeholder="例如：北京" />
+          </el-form-item>
+        </el-col>
+      </el-row>
 
       <!-- 生日 -->
-      <div class="form-row">
-        <label>生日</label>
-        <input v-model="editForm.birth" type="date" />
-      </div>
+      <el-form-item label="生日">
+        <el-date-picker
+          v-model="editForm.birth"
+          type="date"
+          placeholder="选择生日"
+          format="YYYY年MM月DD日"
+          value-format="YYYY-MM-DD"
+          style="width: 100%"
+        />
+      </el-form-item>
 
       <!-- 邮箱 -->
-      <div class="form-row">
-        <label>邮箱</label>
-        <input v-model="editForm.email" type="email" placeholder="your@email.com" />
-      </div>
+      <el-form-item label="邮箱">
+        <el-input v-model="editForm.email" type="email" placeholder="your@email.com" />
+      </el-form-item>
 
       <!-- 简介 -->
-      <div class="form-row full">
-        <label>个人简介</label>
-        <textarea v-model="editForm.biography" placeholder="介绍一下自己..."></textarea>
-      </div>
+      <el-form-item label="简介">
+        <el-input
+          v-model="editForm.biography"
+          type="textarea"
+          :rows="4"
+          placeholder="介绍一下自己..."
+          maxlength="200"
+          show-word-limit
+        />
+      </el-form-item>
 
       <!-- 操作按钮 -->
       <div class="form-actions">
-        <button @click="cancelEdit" class="btn-cancel">取消</button>
-        <button @click="saveEdit" :disabled="saving" class="btn-save">
+        <el-button @click="cancelEdit">取消</el-button>
+        <el-button
+          @click="saveEdit"
+          :loading="saving"
+          type="primary"
+          :disabled="saving"
+        >
           {{ saving ? '保存中...' : '保存' }}
-        </button>
+        </el-button>
       </div>
     </div>
-  </div>
+  </el-card>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { getUserinfo, getUserAvatar, updateUserinfo, updateUserAvatar } from '@/api/user'
-import type { UserinfoResponse, UserUpdateRequest } from '@/types/userinfo.ts'
-import defaultAvatar from '@/assets/defaultAvatar.png'
+import { ref, computed } from 'vue'
+import { ElMessage } from 'element-plus'
+import {
+  updateUserinfo,
+  updateUserAvatar, getUserinfo, getUserAvatar
+} from '@/api/user'
+import type { UserUpdateRequest } from '@/types/userinfo'
+import { useUserStore } from '@/stores/userStore'
 
 const props = defineProps<{
   visible: boolean
 }>()
 
-// 用户数据
-const userInfo = ref<UserinfoResponse>({
-  username: '',
-  nickname: null,
-  gender: null,
-  birth: null,
-  region: null,
-  biography: null,
-  email: null,
-  phone: '',
-  createTime: ''
+const isEditing = ref(false)
+const saving = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+const selectedFile = ref<File | null>(null)
+
+const userStore = useUserStore()
+
+const avatarUrl = computed(() => {
+  return userStore.avatar
+})
+const userInfo = computed(() => {
+  return userStore.userinfo || {
+    username: '',
+    nickname: null,
+    gender: null,
+    birth: null,
+    region: null,
+    biography: null,
+    email: null,
+    phone: '',
+    createTime: ''
+  }
+})
+const displayGender = computed(() => {
+  const gender = userInfo.value.gender
+  if (gender === 'male') {
+    return '男'
+  }
+  if (gender === 'female') {
+    return '女'
+  }
+  return '保密'
 })
 
-// 编辑表单
+const previewAvatar = computed(() => {
+  if (selectedFile.value) {
+    return URL.createObjectURL(selectedFile.value)
+  }
+  return avatarUrl.value
+})
+
 const editForm = ref<UserUpdateRequest>({
   nickname: null,
   gender: null,
@@ -152,81 +202,59 @@ const editForm = ref<UserUpdateRequest>({
   email: null
 })
 
-const avatarUrl = ref(defaultAvatar)
-const isEditing = ref(false)
-const saving = ref(false)
-const fileInput = ref<HTMLInputElement | null>(null)
-const selectedFile = ref<File | null>(null)
 
-// 预览头像
-const previewAvatar = computed(() => {
-  if (selectedFile.value) {
-    return URL.createObjectURL(selectedFile.value)
-  }
-  return avatarUrl.value
-})
-
-// 加载用户数据
-const loadUserData = async () => {
+const refreshUserinfo = async () => {
   try {
-    const infoRes = await getUserinfo()
-    userInfo.value = infoRes.data
+    const userinfoRes = await getUserinfo()
+    userStore.setUserinfo(userinfoRes.data)
 
     const avatarRes = await getUserAvatar()
-    avatarUrl.value = String(avatarRes.data || defaultAvatar)
-
-    syncToEditForm()
+    userStore.setAvatar(avatarRes.data)
   } catch (err) {
-    console.error('Failed to load user info', err)
+    console.error('刷新用户信息失败', err)
+    ElMessage.error('刷新用户信息失败')
   }
 }
 
-// 将 userInfo 同步到 editForm
 const syncToEditForm = () => {
   editForm.value = {
-    nickname: userInfo.value.nickname,
-    gender: userInfo.value.gender,
-    birth: userInfo.value.birth,
-    region: userInfo.value.region,
-    biography: userInfo.value.biography,
-    email: userInfo.value.email
+    nickname: userStore.userinfo?.nickname ?? null,
+    gender: userStore.userinfo?.gender ?? null,
+    birth: userStore.userinfo?.birth ?? null,
+    region: userStore.userinfo?.region ?? null,
+    biography: userStore.userinfo?.biography ?? null,
+    email: userStore.userinfo?.email ?? null
   }
 }
 
-// 进入编辑模式
 const startEdit = () => {
   syncToEditForm()
   isEditing.value = true
   selectedFile.value = null
 }
 
-// 取消编辑
 const cancelEdit = () => {
   isEditing.value = false
   selectedFile.value = null
 }
 
-// 触发文件选择
 const triggerFileInput = () => {
   fileInput.value?.click()
 }
 
-// 处理文件选择
 const handleFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (file && file.type.startsWith('image/')) {
     selectedFile.value = file
   } else if (file) {
-    alert('请选择图片文件')
+    ElMessage.warning('请选择图片文件')
   }
 }
 
-// 保存编辑
 const saveEdit = async () => {
   saving.value = true
   try {
-    // 清理空字符串为 null
     const clean = (str: string | null) => (str === '' ? null : str)
     const payload: UserUpdateRequest = {
       nickname: clean(editForm.value.nickname),
@@ -238,93 +266,97 @@ const saveEdit = async () => {
     }
 
     await updateUserinfo(payload)
-
     if (selectedFile.value) {
       await updateUserAvatar(selectedFile.value)
     }
 
-    // 重新加载最新数据
-    await loadUserData()
+    await refreshUserinfo()
     isEditing.value = false
-    alert('保存成功！')
+    ElMessage.success('保存成功！')
   } catch (err) {
     console.error('保存失败', err)
-    alert('保存失败，请重试')
+    ElMessage.error('保存失败，请重试')
   } finally {
     saving.value = false
   }
 }
 
-onMounted(() => {
-  if (props.visible) {
-    loadUserData()
-  }
-})
-
-defineExpose({ loadUserData })
-
-// 格式化函数
 const formatDate = (dateStr: string) => {
   return dateStr.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日')
-}
-
-const formatDateTime = (dateTimeStr: string) => {
-  return dateTimeStr.replace(/(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/, '$1年$2月$3日 $4')
 }
 </script>
 
 <style scoped>
 .user-info-card {
-  width: 100%;
-  max-width: 400px;
-  padding: 24px;
-  background-color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-width: 500px;
   margin: 0 auto;
-  overflow: visible;
+  border-radius: 12px;
+  background-color: #fff;
 }
 
-/* —————— 公共 —————— */
+/* 查看模式头像 */
 .avatar-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-.avatar {
+/* 编辑模式头像 —— 关键：居中 */
+.avatar-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.avatar-editor {
+  position: relative;
+  cursor: pointer;
+  width: fit-content; /* 防止被拉宽 */
+}
+
+.change-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #f0f0f0;
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.avatar-editor:hover .change-overlay {
+  opacity: 1;
 }
 
 .nickname {
+  text-align: center;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
-  text-align: center;
-  margin: 16px 0 6px;
+  margin: 16px 0 8px;
+  color: var(--el-text-color-primary);
 }
 
 .username {
-  font-size: 14px;
-  color: #999;
   text-align: center;
-  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--el-text-color-secondary);
+  margin-bottom: 20px;
 }
 
 .row {
   display: flex;
-  align-items: flex-start;
+  gap: 12px;
   margin-bottom: 12px;
   padding: 0 16px;
-}
-
-.field {
   font-size: 14px;
-  color: #333;
+  color: var(--el-text-color-regular);
 }
 
 .bio {
@@ -334,140 +366,27 @@ const formatDateTime = (dateTimeStr: string) => {
 
 .bio .field {
   font-weight: 600;
-  color: #666;
+  color: var(--el-text-color-secondary);
 }
 
 .bio-content {
-  font-size: 14px;
-  color: #333;
   line-height: 1.5;
   white-space: pre-wrap;
 }
 
 .action-area {
-  margin-top: 24px;
   text-align: center;
+  margin-top: 24px;
 }
 
-.btn-edit {
-  padding: 8px 24px;
-  background: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.btn-edit:hover {
-  background: #e9e9e9;
-}
-
-/* —————— 编辑模式 —————— */
-.edit-mode {
-  padding: 24px;
-}
-
-.avatar-editor {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin: 0 auto 20px;
-  cursor: pointer;
-}
-
-.avatar-editor img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.change-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
-  font-size: 12px;
-}
-
-.avatar-editor:hover .change-overlay {
-  opacity: 1;
-}
-
-.form-row {
+.dual-row {
   margin-bottom: 16px;
-}
-
-.form-row label {
-  display: block;
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 6px;
-}
-
-.form-row input,
-.form-row select,
-.form-row textarea {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background-color: #fafafa;
-}
-
-.form-row textarea {
-  min-height: 60px;
-  resize: vertical;
-}
-
-/* 双列布局：性别 + 地区 */
-.dual {
-  display: flex;
-  gap: 12px;
-}
-
-.half {
-  flex: 1;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 20px;
-}
-
-.btn-cancel, .btn-save {
-  padding: 8px 20px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.btn-cancel {
-  background: #f0f0f0;
-  color: #333;
-}
-
-.btn-save {
-  background: #d4b8e7;
-  color: white;
-}
-
-.btn-save:disabled {
-  background: #ccc;
-  cursor: not-allowed;
+  margin-top: 24px;
 }
 </style>

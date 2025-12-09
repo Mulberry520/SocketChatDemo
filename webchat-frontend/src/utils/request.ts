@@ -1,5 +1,7 @@
-import axios from "axios";
-import type { AxiosInstance } from "axios";
+import axios from 'axios'
+import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios'
+import { useUserStore } from "@/stores/userStore.ts"
+
 
 const request: AxiosInstance = axios.create({
   baseURL: 'http://localhost:8080/api',
@@ -8,7 +10,7 @@ const request: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  responseType: 'json',
+  responseType: 'json'
 })
 
 const whiteList: string[] = [
@@ -17,13 +19,13 @@ const whiteList: string[] = [
   '/auth/refresh'
 ]
 
-let isRefreshing: boolean = false
+let isRefreshing = false
+
 interface QueueItem {
   resolve: (token: string) => void
   reject: (error: any) => void
 }
 let failedQueue: QueueItem[] = []
-
 
 const processQueue = (error: any, token?: string) => {
   failedQueue.forEach(promise => {
@@ -38,16 +40,19 @@ const processQueue = (error: any, token?: string) => {
   failedQueue = []
 }
 
+// 请求拦截器
 request.interceptors.request.use(
-  (config) => {
+  async (config: InternalAxiosRequestConfig) => {
     const url = config.url || ''
+    const userStore = useUserStore()
 
-    if (!whiteList.some((path) => url.startsWith(path))) {
-      const accessToken = localStorage.getItem('accessToken')
+    if (!whiteList.some(path => url.startsWith(path))) {
+      const accessToken = userStore.accessToken
+
       if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`
       } else {
-        console.warn("No access token")
+        console.warn('No access token found in store')
       }
     }
 
@@ -58,17 +63,18 @@ request.interceptors.request.use(
   }
 )
 
+// 响应拦截器
 request.interceptors.response.use(
   (response) => {
-    let result = response.data
+    const result = response.data
 
     if (result && typeof result === 'object' && 'code' in result) {
       if (result.code === 200) {
         return result
       }
-      const error = new Error(result.msg || 'Request failed')
-      ;(error as any).response = { data: result, status: result.code }
-      ;(error as any).config = response.config
+      const error: any = new Error(result.msg || 'Request failed')
+      error.response = { data: result, status: result.code }
+      error.config = response.config
       return Promise.reject(error)
     }
 
@@ -76,46 +82,49 @@ request.interceptors.response.use(
   },
   async (error) => {
     const originRequest = error.config
+    const userStore = useUserStore()
+
     if (originRequest.url === '/auth/refresh') {
-      localStorage.removeItem('accessToken')
+      userStore.clearToken()
       return Promise.reject(error)
     }
 
-    const isTokenExpire =
-      error.response?.data.code === 401 ||
+    const isTokenExpired =
+      error.response?.data?.code === 401 ||
       error.response?.status === 401
 
-    if (isTokenExpire && !originRequest._retry) {
+    if (isTokenExpired && !originRequest._retry) {
       originRequest._retry = true
 
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          failedQueue.push({resolve, reject})
-        }).then(token => {
+          failedQueue.push({ resolve, reject })
+        }).then(async (token) => {
           originRequest.headers.Authorization = `Bearer ${token}`
           return request(originRequest)
-        }).catch(error => Promise.reject(error))
+        }).catch(err => Promise.reject(err))
       } else {
         isRefreshing = true
 
         try {
-          const result = await request.get('/auth/refresh')
-          const newAccessToken = result.data
-          localStorage.setItem('accessToken', newAccessToken)
+          const refreshResult = await request.get('/auth/refresh')
+          const newAccessToken = refreshResult.data
+          userStore.setAccessToken(newAccessToken)
 
           originRequest.headers.Authorization = `Bearer ${newAccessToken}`
           processQueue(null, newAccessToken)
           return request(originRequest)
-        } catch (error) {
-          processQueue(error)
-          localStorage.removeItem('accessToken')
-          return Promise.reject(error)
+        } catch (refreshError) {
+          processQueue(refreshError)
+          userStore.clearToken()
+
+          window.location.href = '/login'
+          return Promise.reject(refreshError)
         } finally {
           isRefreshing = false
         }
       }
     }
-
     return Promise.reject(error)
   }
 )

@@ -51,15 +51,16 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
             if (token != null) {
                 String username = jwtUtil.extractUnexpiredUsername(token);
                 if (username != null) {
+                    System.out.println("username is null");
                     if (template.opsForValue().get(CommonConst.USER_ROLE_PREFIX + username) != null) {
                         attributes.put("username", username);
                         return true;
                     }
                 }
+                response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
+                return false;
             }
-
-            response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
-            return false;
+            return true;
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
             response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);

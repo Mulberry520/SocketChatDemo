@@ -11,6 +11,7 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -33,26 +34,23 @@ public class RoomListeningController {
         this.messagingTemplate = messagingTemplate;
     }
 
-
     @MessageMapping("/room/{roomName}/connect")
     public void connectRoom(
             @DestinationVariable String roomName,
             SimpMessageHeaderAccessor accessor
     ) {
-        String username = getCurrentUser(accessor);
-        if (username == null) {
-            return;
-        }
-        if (chatRoomMapper.selectIsRoomExists(roomName) == null) {
-            return;
-        }
-        if (roomUserMapper.selectIfUserInRoom(username, roomName) == null) {
-            return;
-        }
+        String username = accessor.getUser().getName();
+        if (isValid(username, roomName)) {
+            listeningRoomService.connectRoom(username, roomName);
 
-        listeningRoomService.connectRoom(username, roomName);
-        ChatMessage joinMessage = new ChatMessage(CommonConst.MESSAGE_TYPE_JOIN, roomName, username);
-        broadMessage(joinMessage);
+            ChatMessage joinMessage = new ChatMessage();
+            joinMessage.setSender(username);
+            joinMessage.setRecipient(roomName);
+            joinMessage.setType(CommonConst.MESSAGE_TYPE_JOIN);
+            joinMessage.setTime(LocalDateTime.now());
+
+            broadMessage(joinMessage);
+        }
     }
 
     @MessageMapping("/room/{roomName}/disconnect")
@@ -60,16 +58,18 @@ public class RoomListeningController {
             @DestinationVariable String roomName,
             SimpMessageHeaderAccessor accessor
     ) {
-        String username = getCurrentUser(accessor);
-        if (username == null) {
-            return;
+        String username = accessor.getUser().getName();
+        if (isValid(username, roomName)) {
+            listeningRoomService.disconnectRoom(username, roomName);
+
+            ChatMessage quitMessage = new ChatMessage();
+            quitMessage.setSender(username);
+            quitMessage.setRecipient(roomName);
+            quitMessage.setType(CommonConst.MESSAGE_TYPE_QUIT);
+            quitMessage.setTime(LocalDateTime.now());
+
+            broadMessage(quitMessage);
         }
-        if (chatRoomMapper.selectIsRoomExists(roomName) == null) {
-            return;
-        }
-        listeningRoomService.disconnectRoom(username, roomName);
-        ChatMessage quitMessage = new ChatMessage(CommonConst.MESSAGE_TYPE_QUIT, roomName, username);
-        broadMessage(quitMessage);
     }
 
     @MessageMapping("/room/{roomName}/chat")
@@ -78,36 +78,42 @@ public class RoomListeningController {
             SimpMessageHeaderAccessor accessor,
             ChatMessage message
     ) {
-        String username = getCurrentUser(accessor);
-        if (chatRoomMapper.selectIsRoomExists(roomName) == null) {
-            return;
-        }
-        if (username == null) {
-            return;
-        }
-        if (roomUserMapper.selectIfUserInRoom(username, roomName) == null) {
-            return;
-        }
-        if (!listeningRoomService.isListening(username, roomName)) {
-            return;
-        }
+        String username = accessor.getUser().getName();
+        if (isValid(username, roomName)) {
+            if (!listeningRoomService.isListening(username, roomName)) {
+                return;
+            }
 
-        message.setType(CommonConst.MESSAGE_TYPE_MESSAGE);
-        message.setSender(username);
-        message.setRecipient(roomName);
-        message.setTime(LocalDateTime.now());
+            message.setType(CommonConst.MESSAGE_TYPE_MESSAGE);
+            message.setSender(username);
+            message.setRecipient(roomName);
+            message.setTime(LocalDateTime.now());
 
-        broadMessage(message);
+            broadMessage(message);
+        }
     }
 
     private void broadMessage(ChatMessage message) {
         Set<String> listeners = listeningRoomService.getListeners(message.getRecipient());
+
+        if (listeners == null || listeners.isEmpty()) {
+            return;
+        }
         for (String user : listeners) {
             messagingTemplate.convertAndSendToUser(user, "/queue/room-message", message);
         }
     }
 
-    private String getCurrentUser(SimpMessageHeaderAccessor accessor) {
-        return (String) accessor.getSessionAttributes().get("username");
+    private boolean isValid(String username, String roomName) {
+        if (chatRoomMapper.selectIsRoomExists(roomName) == null) {
+            return false;
+        }
+        if (username == null) {
+            return false;
+        }
+        if (roomUserMapper.selectIfUserInRoom(username, roomName) == null) {
+            return false;
+        }
+        return true;
     }
 }

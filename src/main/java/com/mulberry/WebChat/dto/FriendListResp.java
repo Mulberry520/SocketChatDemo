@@ -6,4 +6,5 @@ import lombok.Data;
 public class FriendListResp {
     private String friendUsername;
     private String alias;
+    private String avatar;
 }

@@ -7,7 +7,7 @@ import java.util.List;
 
 @Mapper
 public interface FriendshipMapper {
-    @Select("select friend_username, alias from friendship where username = #{username}")
+    @Select("select friend_username, alias from friendship where username = #{username} order by favor desc, alias")
     List<FriendListResp> selectFriendNames(@Param("username") String username);
 
     @Select("select id from friendship where username = #{username} and friend_username = #{friend_username}")

@@ -2,6 +2,7 @@ import {createRouter, createWebHistory} from 'vue-router'
 import type { RouteRecordRaw, Router } from 'vue-router'
 import LoginView from "@/views/LoginView.vue";
 import TestMainView from "@/views/Main.vue";
+import WebsocketView from "@/views/WebsocketView.vue";
 
 
 const routes: RouteRecordRaw[] = [
@@ -16,6 +17,10 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/main',
     component: TestMainView
+  },
+  {
+    path: '/websocket',
+    component: WebsocketView
   }
 ]
 

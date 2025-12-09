@@ -39,6 +39,10 @@ public class FriendshipServiceImpl implements FriendshipService {
             if (friend.getAlias() == null) {
                 friend.setAlias(friend.getFriendUsername());
             }
+            String avatar = userMapper.selectAvatarByName(friend.getFriendUsername());
+            if (avatar != null) {
+                friend.setAvatar(fileLoadUtil.generateSignedUrl(avatar));
+            }
         }
         return friends;
     }

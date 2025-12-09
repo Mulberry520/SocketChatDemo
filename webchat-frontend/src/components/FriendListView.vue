@@ -1,119 +1,81 @@
 <template>
-  <div class="friends-panel">
-    <div class="panel-header">
-      <h3>My Friends</h3>
+  <div class="friend-list-container">
+    <div
+      v-for="item in friendList"
+      :key="item.friendUsername"
+      class="friend-item"
+      :class="{ active: item.friendUsername === currentFriend?.username }"
+      @click="handleSelect(item)"
+    >
+      <el-avatar
+        :size="45"
+        :src="item.avatar || defaultAvatar"
+        fit="cover"
+      />
+      <span class="alias">{{ item.alias || item.friendUsername }}</span>
     </div>
-    <el-scrollbar class="friends-list">
-      <div v-if="loading" class="loading">
-        <el-skeleton :rows="5" animated />
-      </div>
-      <div v-else-if="friends.length === 0" class="empty">
-        No friends yet.
-      </div>
-      <div v-else class="friend-item" v-for="f in friends" :key="f.friendUsername">
-        <el-avatar>{{ f.alias?.charAt(0).toUpperCase() || f.friendUsername.charAt(0).toUpperCase() }}</el-avatar>
-        <div class="friend-info">
-          <div class="name">{{ f.alias || f.friendUsername }}</div>
-          <div class="status-tag" :class="`status-${f.friendStatus.toLowerCase()}`">
-            {{ f.friendStatus }}
-          </div>
-        </div>
-        <div v-if="f.favor === 1" class="favor">⭐</div>
-      </div>
-    </el-scrollbar>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { getFriendList } from '@/api/friendship'
-import type { FriendsResponse } from '@/types/friendship'
-import {ElMessage} from "element-plus";
+import { computed } from 'vue'
+import { useFriendStore } from '@/stores/friendStore'
+import { getFriendDetail } from '@/api/friend'
+import defaultAvatar from '@/assets/defaultAvatar.png'
+import { ElMessage } from 'element-plus'
 
-const friends = ref<FriendsResponse[]>([])
-const loading = ref(false)
+const friendStore = useFriendStore()
 
-onMounted(async () => {
-  await loadFriends()
-})
+const friendList = computed(() => friendStore.friendList)
+const currentFriend = computed(() => friendStore.currentFriend)
 
-const loadFriends = async () => {
-  loading.value = true
+const handleSelect = async (item: { friendUsername: string }) => {
+  if (currentFriend.value?.username === item.friendUsername) {
+    return
+  }
+
   try {
-    const res = await getFriendList()
-    friends.value = res.data
-  } catch (err) {
-    console.error('Failed to load friends', err)
-    ElMessage.error('Failed to load friend list')
-  } finally {
-    loading.value = false
+    const res = await getFriendDetail(item.friendUsername)
+    friendStore.setCurrentFriend(res.data)
+  } catch (err: any) {
+    ElMessage.error(err.message || '加载好友详情失败')
   }
 }
 </script>
 
 <style scoped>
-.friends-panel {
+.friend-list-container {
   height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.panel-header {
-  padding: 16px;
-  border-bottom: 1px solid #eee;
-  font-weight: 600;
-}
-
-.friends-list {
-  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
 }
 
 .friend-item {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  gap: 12px;
-  border-bottom: 1px solid #f5f5f5;
+  gap: 15px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.friend-info {
-  flex: 1;
-  min-width: 0;
+.friend-item:hover,
+.friend-item.active {
+  background-color: var(--el-color-primary-light-9);
 }
 
-.name {
+.friend-item.active {
+  border-left: 3px solid var(--el-color-primary);
+  padding-left: 13px;
+}
+
+.alias {
+  font-size: 18px;
   font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.status-tag {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.status-online {
-  background: #eaf8f0;
-  color: #07c160;
-}
-
-.status-offline {
-  background: #f5f5f5;
-  color: #999;
-}
-
-.favor {
-  font-size: 12px;
-  color: #ff6b6b;
+  color: var(--el-text-color-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.loading,
-.empty {
-  padding: 20px;
-  text-align: center;
-  color: #999;
 }
 </style>
